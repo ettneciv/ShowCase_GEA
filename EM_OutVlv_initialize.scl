@@ -1,0 +1,135 @@
+NAMESPACE EM_OutVlv
+TYPE OutVlv_Initialize_Feedbacks
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      initialized { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Equipment Module Initialized
+   END_STRUCT;
+
+END_TYPE
+
+FUNCTION_BLOCK EM_OutVlv_initialize
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      enableStepTransition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := true;   // Enable step transition
+      activate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Activate initialize sequence
+      cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM/EM in position
+      mode_idleOrDone { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Mode idle or done
+   END_VAR
+
+   VAR_OUTPUT 
+      cmd_modeOpenOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Command open outlet mode
+      cmd_modeCloseOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Command close outlet mode
+   END_VAR
+
+   VAR 
+      status { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;   // Mode status
+      feedbacks { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_Initialize_Feedbacks;   // Feedbacks
+      step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_Step;   // Step status
+      _step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Step;   // Step instance
+      _stepTracker { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         actual { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_Initialize_Steps;   // Current step
+         next { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_Initialize_Steps;   // Next step
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    //********************************************************
+	    // EM_OutVlv_initialize Logic
+	    // Description: 
+	    // - Executes the initialization sequence for the outlet valve.
+	    // - Ensures the system resets all relevant internal states and flags.
+	    //********************************************************
+	    
+	    REGION Revision History
+	        (*
+	        Author      Date        Change
+	        GEA-VAR     2025-05-15  Initial version
+	        *)
+	    END_REGION
+	END_REGION
+	
+	REGION Step 
+	    IF #activate THEN
+	        CASE #step.actual OF
+	                // Idle state, no sequence active    
+	            OutVlv_Initialize_Steps#INITIAL:
+	                #_stepTracker.next := OutVlv_Initialize_Steps#OPEN_OUTLET;
+	                
+	                // Open outlet valve
+	            OutVlv_Initialize_Steps#OPEN_OUTLET:
+	                #_stepTracker.next := OutVlv_Initialize_Steps#CLOSE_OUTLET;
+	                
+	                // Close outlet valve
+	            OutVlv_Initialize_Steps#CLOSE_OUTLET :
+	                #_stepTracker.next := OutVlv_Initialize_Steps#INITIALIZED;
+	                
+	                //  Initialized
+	            OutVlv_Initialize_Steps#INITIALIZED:
+	                ;
+	                
+	                // Handle invalid step
+	            ELSE
+	                // Reset to idle on invalid step
+	                #step.actual := #_stepTracker.next := OutVlv_Initialize_Steps#INITIAL;
+	        END_CASE;
+	        
+	        // Advance step when module positioned/Idle or Done and transition is enable
+	        IF #enableStepTransition AND #cm_inPosition AND #mode_idleOrDone THEN
+	            #step.actual := #_stepTracker.next;
+	        END_IF;
+	        
+	    END_IF;
+	    
+	    // Manage step transitions and reset
+	    #_step(forceReset:=NOT #activate,
+	           step := #step);
+	    #_stepTracker.actual := #step.actual;
+	    
+	END_REGION
+	
+	REGION Actions
+	    // NA
+	    
+	END_REGION
+	
+	REGION Control/Equipment Modules and Modes: Commands     
+	    //********************************************************
+	    //  Start Open Outlet Mode Control
+	    //********************************************************
+	    #cmd_modeOpenOutlet := (#step.actual = OutVlv_Initialize_Steps#OPEN_OUTLET);
+	    
+	    
+	    //********************************************************
+	    //  Start Close Outlet Mode Control
+	    //********************************************************
+	    #cmd_modeCloseOutlet := (#step.actual = OutVlv_Initialize_Steps#CLOSE_OUTLET);
+	    
+	    
+	    
+	END_REGION
+	
+	REGION #feedbacks
+	    // Update feedback statuses
+	    #feedbacks.initialized :=  #cm_inPosition AND #mode_idleOrDone AND (#step.actual = OutVlv_Initialize_Steps#INITIALIZED) AND (NOT #step.firstCycle);
+	    
+	END_REGION
+	
+	REGION Status
+	    // System idle when not activated
+	    #status.idle := NOT #activate;
+	                                    
+	    // System done when initialized step is reached
+	    #status.done := NOT #status.idle AND  #feedbacks.initialized;
+	                                    
+	    // System busy if initialize is not complete
+	    #status.busy := NOT #status.idle AND NOT #status.done;
+	                                    
+	END_REGION
+	
+	                                        
+END_FUNCTION_BLOCK
+END_NAMESPACE

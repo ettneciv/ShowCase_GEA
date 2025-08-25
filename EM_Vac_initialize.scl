@@ -1,0 +1,136 @@
+NAMESPACE EM_Vac
+TYPE Vac_Initialize_Feedbacks
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      initialized { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Equipment Module Initialized
+   END_STRUCT;
+
+END_TYPE
+
+FUNCTION_BLOCK EM_Vac_initialize
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      en_stepTrans { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := true;   // Enable Step Transition
+      activate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Activate/Stop sequence
+      cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM/EM in position
+      mode_idleOrDone { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Modes(ext): Idle or Done
+   END_VAR
+
+   VAR_OUTPUT 
+      cmd_modeStartVacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Command to startVacuum mode
+      cmd_modeStopVacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Command to stopVacuum mode
+   END_VAR
+
+   VAR 
+      status { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;   // Mode status
+      feedbacks { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : Vac_Initialize_Feedbacks;   // Feedbacks
+      step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_Step;   // Step status
+      _step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Step;   // Step instance
+      _stepTracker { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         actual { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Vac_Initialize_Steps;
+         next { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Vac_Initialize_Steps;
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+	
+	REGION Header
+	    //********************************************************
+	    // EM_Vac_initializeVacuum Logic
+	    // Description: 
+	    // - Manages the initialization sequence for the vacuum system, checking start and stop modes.
+	    //********************************************************
+	    
+	    REGION Revision History
+	        (*
+	            Author      Date        Change
+	            GEA-VAR     15MAY25     Initial version
+	        *)
+	    END_REGION
+	    
+	END_REGION
+	
+	REGION Step 
+	    IF #activate THEN
+	        CASE #step.actual OF
+	                // Idle state, no sequence active   
+	            Vac_Initialize_Steps#INITIAL:
+	                #_stepTracker.next := Vac_Initialize_Steps#START_VACUUM;
+	                
+	                // Start vacuum mode   
+	            Vac_Initialize_Steps#START_VACUUM:
+	                #_stepTracker.next := Vac_Initialize_Steps#STOP_VACUUM;
+	                
+	                // Stop vacuum mode
+	            Vac_Initialize_Steps#STOP_VACUUM:
+	                #_stepTracker.next := Vac_Initialize_Steps#INITIALIZED;
+	                
+	                //  Initialization complete
+	            Vac_Initialize_Steps#INITIALIZED:
+	                ;
+	                
+	                // Handle invalid step
+	            ELSE
+	                // Reset to idle on invalid step
+	                #step.actual := #_stepTracker.next := Vac_Initialize_Steps#INITIAL;
+	        END_CASE;
+	        
+	        // Advance step when module positioned/Idle or Done and transition is enable
+	        IF #en_stepTrans AND #cm_inPosition AND #mode_idleOrDone THEN
+	            #step.actual := #_stepTracker.next;
+	        END_IF;
+	        
+	    END_IF;
+	    
+	    // Manage step transitions and reset
+	    #_step(forceReset:=NOT #activate,
+	           step := #step);
+	    #_stepTracker.actual := #step.actual;
+	END_REGION
+	
+	REGION Actions
+	    // NA
+	    
+	END_REGION
+	
+	REGION Control/Equipment Modules and Modes: Commands 
+	    
+	    //********************************************************
+	    // Start Vacuum Mode Control
+	    //********************************************************
+	    #cmd_modeStartVacuum := (#step.actual = Vac_Initialize_Steps#START_VACUUM);
+	    
+	    
+	    //********************************************************
+	    // Vacuum Valve Control
+	    //********************************************************
+	    #cmd_modeStopVacuum := (#step.actual = Vac_Initialize_Steps#STOP_VACUUM);
+	    
+	    
+	END_REGION
+	
+	
+	REGION #feedbacks
+	    #feedbacks.initialized := #cm_inPosition AND #mode_idleOrDone AND (#step.actual = Vac_Initialize_Steps#INITIALIZED);
+	    
+	END_REGION
+	
+	
+	REGION Status
+	    // Idle when sequence not active
+	    #status.idle := NOT #activate;
+	                                    
+	    // Done when initialized
+	    #status.done := NOT #status.idle AND #feedbacks.initialized;
+	                                    
+	    // Busy during initialization
+	    #status.busy := NOT #status.idle AND NOT #status.done;
+	                                    
+	END_REGION
+	
+	                                        
+END_FUNCTION_BLOCK
+END_NAMESPACE

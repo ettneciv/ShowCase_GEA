@@ -1,0 +1,140 @@
+NAMESPACE EM_OutVlv
+TYPE OutVlv_HoldPosition_Feedbacks
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      held { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Held in last position
+   END_STRUCT;
+
+END_TYPE
+
+FUNCTION_BLOCK EM_OutVlv_holdPosition
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      enableStepTransition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := true;   // Enable step transition
+      parameters { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_HoldPosition_Params;   // Hold position parameters
+      activate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Activate hold sequence
+      cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM/EM in position
+      mode_idleOrDone { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Mode idle or done
+      outletVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is closed
+   END_VAR
+
+   VAR_OUTPUT 
+      cmd_modeOpenOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Command open outlet mode
+      cmd_modeCloseOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Command close outlet mode
+   END_VAR
+
+   VAR 
+      status { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;   // Mode status
+      feedbacks { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_HoldPosition_Feedbacks;   // Feedbacks
+      step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_Step;   // Step status
+      _step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Step;   // Step instance
+      _stepTracker { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         actual { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_HoldPosition_Steps;   // Current step
+         next { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_HoldPosition_Steps;   // Next step
+      END_STRUCT;
+      _vlvClosedAtInitialStep { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    //********************************************************
+	    // EM_OutVlv_holdPosition Logic
+	    // Description: 
+	    // - Manages the hold position sequence for the outlet valve, maintaining the last valve position.
+	    //********************************************************
+	    
+	    REGION Revision History
+	        (*
+	        Author      Date        Change
+	        GEA-VAR     2025-05-15  Initial version
+	        *)
+	    END_REGION
+	END_REGION
+	
+	REGION Step 
+	    IF #activate THEN
+	        CASE #step.actual OF
+	                // Idle state, no sequence active
+	            OutVlv_HoldPosition_Steps#INITIAL:
+	                #_stepTracker.next := OutVlv_HoldPosition_Steps#HELD;
+	                
+	                // Hold outlet valve position
+	            OutVlv_HoldPosition_Steps#HELD:
+	                #_stepTracker.next := OutVlv_HoldPosition_Steps#DONE;
+	                
+	                // Hold position sequence complete
+	            OutVlv_HoldPosition_Steps#DONE:
+	                ;
+	                
+	                // Handle invalid step
+	            ELSE
+	                // Reset to idle on invalid step
+	                #step.actual := #_stepTracker.next := OutVlv_HoldPosition_Steps#INITIAL;
+	        END_CASE;
+	        
+	        // Advance step when module positioned/Idle or Done and transition is enable
+	        IF  #enableStepTransition AND #cm_inPosition AND #mode_idleOrDone THEN
+	            #step.actual := #_stepTracker.next;
+	        END_IF;
+	        
+	    END_IF;
+	    
+	    // Manage step transitions and reset
+	    #_step(forceReset := NOT #activate,
+	           step := #step);
+	    #_stepTracker.actual := #step.actual;
+	    
+	END_REGION
+	
+	REGION Actions
+	    IF #step.actual = OutVlv_HoldPosition_Steps#INITIAL THEN
+	        #_vlvClosedAtInitialStep := #outletVlv_isClosed;
+	    END_IF;
+	    
+	END_REGION
+	
+	REGION Control Modules: Commands     
+	    //********************************************************
+	    // Open Outlet Mode Control
+	    //********************************************************
+	    REGION Open Outlet Mode
+	        // Command Open outlet mode
+	        #cmd_modeOpenOutlet := #activate AND (NOT #_vlvClosedAtInitialStep);
+	        
+	    END_REGION
+	    
+	    //********************************************************
+	    // Close Outlet Mode Control
+	    //********************************************************
+	    REGION Close Outlet Mode
+	        // Command Close outlet mode
+	        #cmd_modeCloseOutlet := #activate AND  #_vlvClosedAtInitialStep;
+	        
+	    END_REGION
+	    
+	END_REGION
+	
+	REGION #feedbacks
+	    // Update feedback statuses
+	    #feedbacks.held := (#step.actual = OutVlv_HoldPosition_Steps#HELD) OR (#step.actual = OutVlv_HoldPosition_Steps#DONE);
+	    
+	END_REGION
+	
+	REGION Status
+	    // System idle when not activated
+	    #status.idle := NOT #activate;
+	                                    
+	    // System done when position held
+	    #status.done := NOT #status.idle AND #cm_inPosition AND (#step.actual = OutVlv_HoldPosition_Steps#DONE);
+	                                    
+	    // System busy during hold sequence
+	    #status.busy := NOT #status.idle AND NOT #status.done;
+	                                    
+	END_REGION
+	
+	                                        
+END_FUNCTION_BLOCK
+END_NAMESPACE

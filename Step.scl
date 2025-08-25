@@ -1,0 +1,99 @@
+NAMESPACE LIB
+FUNCTION_BLOCK Step
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      forceReset { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_VAR
+
+   VAR_IN_OUT 
+      step : Util_Step;
+   END_VAR
+
+   VAR 
+      _private { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         prevCycleStep { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Int;   // Previous Cycle Step number
+         actualCycleCount { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UInt;
+         prevSteps { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Array[0..Util_Step_Constants#MAX_ARRAY] of Struct
+            number { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Int;
+            cycleCount { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UInt;
+         END_STRUCT;
+         stepTimer {InstructionName := 'TON_TIME'; LibVersion := '1.0'; ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : TON_TIME;
+      END_STRUCT;
+   END_VAR
+
+   VAR_TEMP 
+      t_index : Int;
+   END_VAR
+
+   VAR CONSTANT 
+      MAX_TIME : Time := T#24D_20H_31M_23S_647MS;
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    
+	    //********************************************************
+	    // Step Control Logic
+	    // Description: 
+	    // - Resets step when a new mode is detected or forced reset is triggered.
+	    // - Tracks the first cycle of the step to manage transitions.
+	    // - Maintains a step history in an array for logging or debugging.
+	    // - Handles timer updates for step timing control.
+	    //********************************************************
+	    
+	    REGION Revision History
+	        (*
+	        Author      Date        Change
+	        VAR         15MAY25     Initial
+	        *)
+	    END_REGION
+	    
+	END_REGION
+	
+	
+	
+	// Reset step number if a new mode is detected
+	IF #forceReset THEN
+	    #step.actual :=  Util_Step_Constants#RESET_STEP;  // Ensures the process starts fresh
+	END_IF;
+	
+	// Detect if this is the first cycle of a new step
+	#step.firstCycle := (#step.actual <> #_private.prevCycleStep);
+	// Step is considered first cycle if it differs from the previous step
+	// or if a force reset is triggered
+	
+	IF #step.firstCycle THEN
+	    // Shift step history array to store the latest step change
+	    #t_index := Util_Step_Constants#MAX_ARRAY;
+	    WHILE #t_index > 0 DO
+	        #_private.prevSteps[#t_index] := #_private.prevSteps[#t_index - 1];
+	        #t_index := #t_index - 1;  
+	    END_WHILE;
+	    
+	    #_private.actualCycleCount := 1;    // Reset step cycle count
+	ELSE
+	    #_private.actualCycleCount += 1;    // Incr step cycle count
+	    
+	END_IF;
+	
+	#_private.prevSteps[0].number := #step.actual;
+	#_private.prevSteps[0].cycleCount := #_private.actualCycleCount;
+	
+	// Store the previous step value
+	#_private.prevCycleStep := #step.actual;
+	
+	REGION Timer
+	    // Start or continue timing the step unless it's the first cycle
+	    #_private.stepTimer(IN := NOT (#step.firstCycle),
+	                        PT := #MAX_TIME);
+	    
+	    #step.actualTimer := #_private.stepTimer.ET;
+	    
+	END_REGION
+	
+	
+	
+END_FUNCTION_BLOCK
+END_NAMESPACE

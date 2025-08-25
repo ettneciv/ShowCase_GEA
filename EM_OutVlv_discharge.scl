@@ -1,0 +1,139 @@
+NAMESPACE EM_OutVlv
+TYPE OutVlv_Discharge_Feedbacks
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      closingOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_STRUCT;
+
+END_TYPE
+
+FUNCTION_BLOCK EM_OutVlv_discharge
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      enableStepTransition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := true;   // Enable step transition
+      parameters { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_Discharge_Params;   // Discharge parameters
+      activate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Activate discharge sequence
+      cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM/EM in position
+      mode_idleOrDone { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Mode idle or done
+   END_VAR
+
+   VAR_OUTPUT 
+      cmd_modeOpenOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Mode Cmd Open Outlet
+      cmd_modeCloseOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Mode Cmd Close Outlet
+   END_VAR
+
+   VAR 
+      status { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;   // Mode status
+      feedbacks { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_Discharge_Feedbacks;   // Feedbacks
+      step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_Step;   // Step status
+      _step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Step;   // Step instance
+      _stepTracker { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         actual { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_Discharge_Steps;   // Current step
+         next { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_Discharge_Steps;   // Next step
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    //********************************************************
+	    // EM_OutVlv_discharge Logic
+	    // Description: 
+	    // - Manages the discharge sequence for the outlet valve, opening and closing the valve to unload product.
+	    //********************************************************
+	        
+	    REGION Revision History
+	        (*
+	        Author      Date        Change
+	        GEA-VAR     2025-05-15  Initial version
+	        *)
+	    END_REGION
+	END_REGION
+	    
+	REGION Step 
+	    IF #activate THEN
+	        CASE #step.actual OF
+	                // Idle state, no sequence active   
+	            OutVlv_Discharge_Steps#INITIAL:
+	                #_stepTracker.next := OutVlv_Discharge_Steps#OPEN_OUTLET;
+	                
+	                // Open outlet valve
+	            OutVlv_Discharge_Steps#OPEN_OUTLET:
+	                #_stepTracker.next:= OutVlv_Discharge_Steps#DISCHARGING;
+	                
+	                // Discharge product
+	            OutVlv_Discharge_Steps#DISCHARGING:
+	                IF _.LIB.IsTimerExceeded(actualTimer:=#step.actualTimer, limit:=#parameters.dischargeTime) THEN
+	                    #_stepTracker.next:= OutVlv_Discharge_Steps#CLOSE_OUTLET;
+	                END_IF;
+	                
+	                // Close outlet valve
+	            OutVlv_Discharge_Steps#CLOSE_OUTLET:
+	                #_stepTracker.next := OutVlv_Discharge_Steps#DONE;
+	                
+	                // Discharge sequence complete
+	            OutVlv_Discharge_Steps#DONE:
+	                ;
+	                
+	                // Handle invalid step
+	            ELSE
+	                // Reset to idle on invalid step
+	                #step.actual := #_stepTracker.next := OutVlv_Discharge_Steps#INITIAL;
+	        END_CASE;
+	        
+	        // Advance step when module positioned/Idle or Done and transition is enable
+	        IF #enableStepTransition AND #cm_inPosition AND #mode_idleOrDone THEN
+	            #step.actual := #_stepTracker.next;
+	        END_IF;
+	        
+	    END_IF;
+	    
+	    // Manage step transitions and reset
+	    #_step(forceReset := NOT #activate,
+	           step := #step);
+	    #_stepTracker.actual := #step.actual;
+	END_REGION
+	
+	REGION Actions
+	    // NA
+	    
+	END_REGION
+	
+	REGION Control Modules: Commands 
+	    
+	    //********************************************************
+	    // Start Open Outlet Mode Control
+	    //********************************************************
+	    #cmd_modeOpenOutlet := (#step.actual = OutVlv_Discharge_Steps#INITIAL) OR (#step.actual = OutVlv_Discharge_Steps#OPEN_OUTLET) OR (#step.actual = OutVlv_Discharge_Steps#DISCHARGING);
+	    
+	    //********************************************************
+	    // Start Close Outlet Mode Control
+	    //********************************************************
+	    #cmd_modeCloseOutlet := (#step.actual = OutVlv_Discharge_Steps#CLOSE_OUTLET);
+	    
+	END_REGION
+	
+	
+	REGION #feedbacks
+	    // Update feedback statuses
+	    #feedbacks.closingOutlet := (#step.actual = OutVlv_Discharge_Steps#CLOSE_OUTLET);
+	    
+	END_REGION
+	
+	REGION Status
+	    // System idle when not activated
+	    #status.idle := NOT #activate;
+	                                    
+	    // System done when discharge complete
+	    #status.done := NOT #status.idle AND #cm_inPosition AND (#step.actual = OutVlv_Discharge_Steps#DONE);
+	                                    
+	    // System busy during discharge sequence
+	    #status.busy := NOT #status.idle AND NOT #status.done;
+	                                    
+	END_REGION
+	
+	                                        
+END_FUNCTION_BLOCK
+END_NAMESPACE

@@ -1,0 +1,143 @@
+NAMESPACE EM_OutVlv
+TYPE OutVlv_OpenOutlet_Feedbacks
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      waitingOutletOpenDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Delay before opening the outlet valve
+      outletOpened { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is open
+   END_STRUCT;
+
+END_TYPE
+
+FUNCTION_BLOCK EM_OutVlv_openOutlet
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      enableStepTransition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := true;   // Enable step transition
+      parameters { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_OpenOutlet_Params;   // Open outlet parameters
+      activate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Activate open sequence
+      cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM/EM in position
+      outletVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is open
+   END_VAR
+
+   VAR_OUTPUT 
+      cmd_outletVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Command: outlet valve open
+   END_VAR
+
+   VAR 
+      status { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;   // Mode status
+      feedbacks { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_OpenOutlet_Feedbacks;   // Feedbacks
+      step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_Step;   // Step status
+      _step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Step;   // Step instance
+      _stepTracker { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         actual { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_OpenOutlet_Steps;   // Current step
+         next { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_OpenOutlet_Steps;   // Next step
+      END_STRUCT;
+      _vlvOpenAtInitialStep { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    //********************************************************
+	    // EM_OutVlv_openOutlet Logic
+	    // Description: 
+	    // - Manages the outlet valve opening sequence, ensuring proper valve opening timing.
+	    //********************************************************
+	        
+	    REGION Revision History
+	        (*
+	        Author      Date        Change
+	        GEA-VAR     2025-05-15  Initial version
+	        *)
+	    END_REGION
+	END_REGION
+	    
+	REGION Step 
+	    IF #activate THEN
+	        CASE #step.actual OF
+	                // Idle state, no sequence active  
+	            OutVlv_OpenOutlet_Steps#INITIAL:
+	                #_stepTracker.next := OutVlv_OpenOutlet_Steps#OPEN_VLV_DELAY_ACTIVE;
+	                
+	                // Delay for outlet valve opening  
+	            OutVlv_OpenOutlet_Steps#OPEN_VLV_DELAY_ACTIVE:
+	                IF _.LIB.IsTimerExceeded(actualTimer:=#step.actualTimer, limit:=#parameters.vlvOpenDelay) OR #_vlvOpenAtInitialStep THEN
+	                    #_stepTracker.next := OutVlv_OpenOutlet_Steps#OPEN_VLV;
+	                END_IF;
+	                
+	                // Open outlet valve
+	            OutVlv_OpenOutlet_Steps#OPEN_VLV:
+	                #_stepTracker.next := OutVlv_OpenOutlet_Steps#OUTLET_OPENED;
+	                
+	                // Outlet valve is open
+	            OutVlv_OpenOutlet_Steps#OUTLET_OPENED:
+	                ;
+	                
+	                // Handle invalid step
+	            ELSE
+	                // Reset to idle on invalid step
+	                #step.actual := #_stepTracker.next := OutVlv_OpenOutlet_Steps#INITIAL;
+	        END_CASE;
+	        
+	        // Advance step when module positioned/Idle or Done and transition is enable
+	        IF #enableStepTransition AND #cm_inPosition THEN
+	            #step.actual := #_stepTracker.next;
+	        END_IF;
+	        
+	    END_IF;
+	    
+	    // Manage step transitions and reset
+	    #_step(forceReset:=NOT #activate,
+	           step := #step);
+	    #_stepTracker.actual := #step.actual;
+	END_REGION
+	
+	REGION Actions
+	    IF #step.actual = OutVlv_OpenOutlet_Steps#INITIAL THEN
+	        #_vlvOpenAtInitialStep := #outletVlv_isOpen;
+	    END_IF;
+	    
+	END_REGION
+	
+	REGION Control Modules: Commands 
+	    
+	    //********************************************************
+	    // Outlet Valve Control
+	    //********************************************************
+	    REGION Outlet Valve
+	        // Command to open
+	        #cmd_outletVlvOpen := (#_vlvOpenAtInitialStep AND
+	            ((#step.actual = OutVlv_OpenOutlet_Steps#INITIAL) OR
+	            (#step.actual = OutVlv_OpenOutlet_Steps#OPEN_VLV_DELAY_ACTIVE)))
+	            OR
+	            (#step.actual = OutVlv_OpenOutlet_Steps#OPEN_VLV) OR
+	            (#step.actual = OutVlv_OpenOutlet_Steps#OUTLET_OPENED);
+	        
+	    END_REGION
+	    
+	END_REGION
+	
+	
+	REGION Feedbacks
+	    // Update feedback statuses
+	    #feedbacks.waitingOutletOpenDelay := (NOT #_vlvOpenAtInitialStep) AND (#step.actual = OutVlv_OpenOutlet_Steps#OPEN_VLV_DELAY_ACTIVE);
+	    #feedbacks.outletOpened := (#step.actual = OutVlv_OpenOutlet_Steps#OUTLET_OPENED);
+	    
+	END_REGION
+	
+	REGION Status
+	    // The system is idle when inactive
+	    #status.idle := NOT #activate;
+	                                    
+	    // The system is "done" when outlet valve is open
+	    #status.done := NOT #status.idle AND #cm_inPosition AND (#step.actual = OutVlv_OpenOutlet_Steps#OUTLET_OPENED);
+	                                    
+	    // The system is busy when it's active but not yet completed
+	    #status.busy := NOT #status.idle AND NOT #status.done;
+	                                    
+	END_REGION
+	
+	                                        
+END_FUNCTION_BLOCK
+END_NAMESPACE
