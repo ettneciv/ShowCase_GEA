@@ -3,7 +3,7 @@ TYPE OutVlv_inputs
 { Published := 'TRUE' }
 VERSION : 0.1
    STRUCT
-      outletVlv_isOpened { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is open
+      outletVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is open
       outletVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is closed
    END_STRUCT;
 
@@ -142,10 +142,10 @@ VERSION : 0.1
    STRUCT
       AHU_minAirflowReached { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // AHU Minimum airflow reached
       vacuumAirflow_PV { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Real;   // Airflow process value
-      vacuumVlv_isOpened { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vacuum valve is open
-      vacuumVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vacuum valve is close
-      isolationVlv_isOpened { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Isolation valve is open
-      isolationVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Isolation valve is close
+      vacuumVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vacuum valve is open
+      vacuumVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vacuum valve is closed
+      isolationVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Isolation valve is open
+      isolationVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Isolation valve is closed
    END_STRUCT;
 
 END_TYPE
@@ -1593,9 +1593,9 @@ VERSION : 0.1
       parameters { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Vac_StopVacuum_Params;   // Stop vacuum parameters
       activate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Activate/Stop sequence
       cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM/EM in position
-      vacuumVlv_isOpened { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vacuum valve open
+      vacuumVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vacuum valve open
       vacuumVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vacuum valve closed
-      isolationVlv_isOpened { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Isolation valve open
+      isolationVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Isolation valve open
       isolationVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Isolation valve closed
    END_VAR
 
@@ -1702,7 +1702,7 @@ BEGIN
 	    REGION Isolation Valve
 	        // Set open command for valve
 	        #cmd_isolationVlvOpen :=
-	            #isolationVlv_isOpened AND 
+	            #isolationVlv_isOpen AND 
 	            ((#step.actual = Vac_StopVacuum_Steps#INITIAL) OR
 	            (#step.actual = Vac_StopVacuum_Steps#ISOLATION_VALVE_CLOSE_DELAY_ACTIVE));
 	        
@@ -1714,7 +1714,7 @@ BEGIN
 	    REGION Vacuum Valve
 	        // Command to open
 	        #cmd_vacuumVlvOpen :=
-	            #vacuumVlv_isOpened AND
+	            #vacuumVlv_isOpen AND
 	            ((#step.actual = Vac_StopVacuum_Steps#INITIAL) OR
 	            (#step.actual = Vac_StopVacuum_Steps#ISOLATION_VALVE_CLOSE_DELAY_ACTIVE) OR
 	            (#step.actual = Vac_StopVacuum_Steps#CLOSE_ISOLATION_VALVE) OR
@@ -1777,9 +1777,9 @@ NON_RETAIN
       alm { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
       "bool" { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
       isolationVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
-      isolationVlv_isClose { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      isolationVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
       vacuumVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
-      vacuumVlv_isClose { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      vacuumVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
       vacuumControlVlv_cmdOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
       setpoint_vacuumControlVlv { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Real;
       isolationVlv_cmdOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
@@ -1829,7 +1829,7 @@ VERSION : 0.1
       parameters { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_CloseOutlet_Params;   // Close outlet parameters
       activate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Activate mode
       cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM in position
-      outletVlv_isOpened { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is open
+      outletVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is open
       outletVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is closed
    END_VAR
 
@@ -1917,7 +1917,7 @@ BEGIN
 	    //********************************************************
 	    REGION Outlet Valve
 	        // Command to open
-	        #cmd_outletVlvOpen := #outletVlv_isOpened AND
+	        #cmd_outletVlvOpen := #outletVlv_isOpen AND
 	        ((#step.actual = OutVlv_CloseOutlet_Steps#INITIAL) OR
 	        (#step.actual = OutVlv_CloseOutlet_Steps#CLOSE_VLV_DELAY_ACTIVE));
 	        
@@ -1957,7 +1957,7 @@ VERSION : 0.1
       parameters { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_OpenOutlet_Params;   // Open outlet parameters
       activate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Activate open sequence
       cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM/EM in position
-      outletVlv_isOpened { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is open
+      outletVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is open
    END_VAR
 
    VAR_OUTPUT 
@@ -2035,7 +2035,7 @@ BEGIN
 	
 	REGION Actions
 	    IF #step.actual = OutVlv_OpenOutlet_Steps#INITIAL THEN
-	        #_vlvOpenAtInitialStep := #outletVlv_isOpened;
+	        #_vlvOpenAtInitialStep := #outletVlv_isOpen;
 	    END_IF;
 	    
 	END_REGION
@@ -2905,7 +2905,7 @@ BEGIN
 	REGION Check CM/EM(mode) in position
 	    // Set control module position status
 	    #cm_inPosition :=
-	        (#_outputs.cmd_outletVlvOpen AND #outletValveInputs.outletVlv_isOpened) OR
+	        (#_outputs.cmd_outletVlvOpen AND #outletValveInputs.outletVlv_isOpen) OR
 	        ((NOT #_outputs.cmd_outletVlvOpen) AND #outletValveInputs.outletVlv_isClosed);
 	        
 	    #temp_mode_idle_or_done :=
@@ -2938,7 +2938,7 @@ BEGIN
 	            activate := (#interface.cmd = OutVlv_Cmd#PURGE),
 	            cm_inPosition:=#cm_inPosition,
 	            mode_idleOrDone:=#temp_mode_idle_or_done,
-	            outletVlv_isOpen:=#outletValveInputs.outletVlv_isOpened);
+	            outletVlv_isOpen:=#outletValveInputs.outletVlv_isOpen);
 	END_REGION
 	
 	REGION Discharge
@@ -2985,7 +2985,7 @@ BEGIN
 	    #_openOutlet(enableStepTransition:=#enableStepTransition,
 	                 activate := (#interface.cmd = OutVlv_Cmd#OPEN_OUTLET) OR #_initialize.cmd_modeOpenOutlet OR #_purge.cmd_modeOpenOutlet OR #_discharge.cmd_modeOpenOutlet OR #_holdPosition.cmd_modeOpenOutlet,
 	                 cm_inPosition:=#cm_inPosition,
-	                 outletVlv_isOpened:=#outletValveInputs.outletVlv_isOpened);
+	                 outletVlv_isOpen:=#outletValveInputs.outletVlv_isOpen);
 	    
 	END_REGION
 	
@@ -3004,7 +3004,7 @@ BEGIN
 	    #_closeOutlet(enableStepTransition:=#enableStepTransition,
 	                  activate := (#interface.cmd = OutVlv_Cmd#CLOSE_OUTLET) OR #_initialize.cmd_modeCloseOutlet OR #_purge.cmd_modeCloseOutlet OR #_discharge.cmd_modeCloseOutlet OR #_holdPosition.cmd_modeCloseOutlet,
 	                  cm_inPosition:=#cm_inPosition,
-	                  outletVlv_isOpened := #outletValveInputs.outletVlv_isOpened,
+	                  outletVlv_isOpen := #outletValveInputs.outletVlv_isOpen,
 	                  outletVlv_isClosed := #outletValveInputs.outletVlv_isClosed);
 	END_REGION
 	
@@ -3017,8 +3017,8 @@ BEGIN
 	
 	REGION Feedbacks
 	    // Update mode feedbacks 
-	    #interface.feedbacks.outletOpen := #outletValveInputs.outletVlv_isOpened;
-	    #interface.feedbacks.openingOutlet := (NOT #outletValveInputs.outletVlv_isOpened) AND #cmd_outletVlvOpen;
+	    #interface.feedbacks.outletOpen := #outletValveInputs.outletVlv_isOpen;
+	    #interface.feedbacks.openingOutlet := (NOT #outletValveInputs.outletVlv_isOpen) AND #cmd_outletVlvOpen;
 	    #interface.feedbacks.outletClose := #outletValveInputs.outletVlv_isClosed;
 	    #interface.feedbacks.closingOutlet := (NOT #outletValveInputs.outletVlv_isClosed) AND (#interface.cmd <> OutVlv_Cmd#IDLE) AND  (NOT #cmd_outletVlvOpen);
 	    #interface.feedbacks.held := #_holdPosition.feedbacks.held;
@@ -3039,7 +3039,7 @@ BEGIN
 	REGION Check CM/EM(mode) in position
 	    // Set control module position status
 	    #cm_inPosition :=
-	        (#_outputs.cmd_outletVlvOpen AND #outletValveInputs.outletVlv_isOpened) OR
+	        (#_outputs.cmd_outletVlvOpen AND #outletValveInputs.outletVlv_isOpen) OR
 	        ((NOT #_outputs.cmd_outletVlvOpen) AND #outletValveInputs.outletVlv_isClosed);
 	        
 	    // Check if modes are idle or done
@@ -3893,8 +3893,8 @@ BEGIN
 	REGION Check CM/EM(mode) in position
 	    // Set control module position status
 	    #cm_inPosition :=
-	        ((#_outputs.cmd_isolationVlvOpen AND #vacuumInputs.isolationVlv_isOpened) OR ((NOT #_outputs.cmd_isolationVlvOpen) AND #vacuumInputs.isolationVlv_isClosed)) AND
-	        ((#_outputs.cmd_vacuumVlvOpen AND #vacuumInputs.vacuumVlv_isOpened) OR ((NOT #_outputs.cmd_vacuumVlvOpen) AND #vacuumInputs.vacuumVlv_isClosed));
+	        ((#_outputs.cmd_isolationVlvOpen AND #vacuumInputs.isolationVlv_isOpen) OR ((NOT #_outputs.cmd_isolationVlvOpen) AND #vacuumInputs.isolationVlv_isClosed)) AND
+	        ((#_outputs.cmd_vacuumVlvOpen AND #vacuumInputs.vacuumVlv_isOpen) OR ((NOT #_outputs.cmd_vacuumVlvOpen) AND #vacuumInputs.vacuumVlv_isClosed));
 	        
 	    // Check if modes are idle or done
 	    #temp_modes_idle_or_done :=
@@ -3945,9 +3945,9 @@ BEGIN
 	    #_stopVacuum(enableStepTransition:=#enableStepTransition,
 	                 activate := (#interface.cmd = Vac_Cmd#STOP_VACUUM) OR #_initialize.cmd_modeStopVacuum,
 	                 cm_inPosition:=#cm_inPosition,
-	                 vacuumVlv_isOpened := #vacuumInputs.vacuumVlv_isOpened,
+	                 vacuumVlv_isOpen := #vacuumInputs.vacuumVlv_isOpen,
 	                 vacuumVlv_isClosed := #vacuumInputs.vacuumVlv_isClosed,
-	                 isolationVlv_isOpened := #vacuumInputs.isolationVlv_isOpened,
+	                 isolationVlv_isOpen := #vacuumInputs.isolationVlv_isOpen,
 	                 isolationVlv_isClosed := #vacuumInputs.isolationVlv_isClosed);
 	    
 	END_REGION
@@ -3963,7 +3963,7 @@ BEGIN
 	END_REGION
 	
 	REGION Feedbacks
-	    #interface.feedbacks.isolationVlvOpen := (NOT #_startVacuum.status.idle) AND #vacuumInputs.isolationVlv_isOpened;
+	    #interface.feedbacks.isolationVlvOpen := (NOT #_startVacuum.status.idle) AND #vacuumInputs.isolationVlv_isOpen;
 	    // Update mode feedbacks
 	    REGION Modes
 	        #interface.feedbacks.modes.initialize := #_initialize.feedbacks;
@@ -3976,8 +3976,8 @@ BEGIN
 	REGION Check CM/EM(mode) in position
 	    // Set control module position status
 	    #cm_inPosition :=
-	    ((#_outputs.cmd_isolationVlvOpen AND #vacuumInputs.isolationVlv_isOpened) OR ((NOT #_outputs.cmd_isolationVlvOpen) AND #vacuumInputs.isolationVlv_isClosed)) AND
-	    ((#_outputs.cmd_vacuumVlvOpen AND #vacuumInputs.vacuumVlv_isOpened) OR ((NOT #_outputs.cmd_vacuumVlvOpen) AND #vacuumInputs.vacuumVlv_isClosed));
+	    ((#_outputs.cmd_isolationVlvOpen AND #vacuumInputs.isolationVlv_isOpen) OR ((NOT #_outputs.cmd_isolationVlvOpen) AND #vacuumInputs.isolationVlv_isClosed)) AND
+	    ((#_outputs.cmd_vacuumVlvOpen AND #vacuumInputs.vacuumVlv_isOpen) OR ((NOT #_outputs.cmd_vacuumVlvOpen) AND #vacuumInputs.vacuumVlv_isClosed));
 	    
 	    // Check if modes are idle or done
 	    #temp_modes_idle_or_done := (#_startVacuum.status.idle OR #_startVacuum.status.done) AND (#_stopVacuum.status.idle OR #_stopVacuum.status.done);
