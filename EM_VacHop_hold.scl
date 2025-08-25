@@ -1,0 +1,150 @@
+NAMESPACE EM_VacHop
+TYPE VacHop_Hold_Feedbacks
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      held { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vacuum stopped and outlet valve in last position
+   END_STRUCT;
+
+END_TYPE
+
+FUNCTION_BLOCK EM_VacHop_hold
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      enableStepTransition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := true;   // Enable Step Transition
+      parameters { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : VacHop_Hold_Params;   // Hold parameters
+      activate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Activate hold sequence
+      cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM in position
+      em_idleOrDone { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // EM Idle or Done
+      em_vacuum_idle { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // EM Vacuum:  idle
+   END_VAR
+
+   VAR_OUTPUT 
+      cmd_em_vacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : _.EM_Vac.Vac_Cmd;   // EM_Vacuum: Command
+      cmd_em_outVlv { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : _.EM_OutVlv.OutVlv_Cmd;   // EM_OutVlv: Command
+   END_VAR
+
+   VAR 
+      status { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;   // Mode status
+      feedbacks { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_Hold_Feedbacks;   // Feedbacks
+      step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_Step;   // Step status
+      _step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Step;   // Step instance
+      _stepTracker { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         actual { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : VacHop_Hold_Steps;   // Current step
+         next { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : VacHop_Hold_Steps;   // Next step
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    //********************************************************
+	    // EM_VacHop_hold Logic
+	    // Description: 
+	    // - Manages the hold sequence for the vacuum hopper, stopping vacuum and holding the last position of the outlet valve.
+	    //********************************************************
+	        
+	    REGION Revision History
+	        (*
+	        Author      Date        Change
+	        GEA-VAR     2025-05-15  Initial version
+	        *)
+	    END_REGION
+	END_REGION
+	
+	REGION Step 
+	    IF #activate THEN
+	        CASE #step.actual OF
+	                // Idle state, no sequence active 
+	            VacHop_Hold_Steps#INITIAL:
+	                #_stepTracker.next := VacHop_Hold_Steps#STOP_VACUUM;
+	                
+	                // Stop vacuum system  
+	            VacHop_Hold_Steps#STOP_VACUUM:
+	                #_stepTracker.next := VacHop_Hold_Steps#HELD;
+	                
+	                // Hold position
+	            VacHop_Hold_Steps#HELD:
+	                #_stepTracker.next := VacHop_Hold_Steps#DONE;
+	                
+	                //  Hold sequence complete
+	            VacHop_Hold_Steps#DONE:
+	                ;
+	                
+	                // Handle invalid step
+	            ELSE
+	                // Reset to idle on invalid step
+	                #step.actual := #_stepTracker.next := VacHop_Hold_Steps#INITIAL;
+	        END_CASE;
+	        
+	        // Advance step when module positioned
+	        IF #enableStepTransition AND #cm_inPosition AND #em_idleOrDone THEN
+	            #step.actual := #_stepTracker.next;
+	        END_IF;
+	        
+	    END_IF;
+	    
+	    // Manage step transitions and reset
+	    #_step(forceReset := NOT #activate,
+	           step := #step);
+	    #_stepTracker.actual := #step.actual;
+	END_REGION
+	
+	REGION Equipment Modules   
+	    REGION Vacuum: Commands      
+	        CASE #step.actual OF
+	            VacHop_Hold_Steps#INITIAL..VacHop_Hold_Steps#STOP_VACUUM:
+	                IF #em_vacuum_idle THEN
+	                    #cmd_em_vacuum := _.EM_Vac.Vac_Cmd#IDLE;
+	                ELSE
+	                    #cmd_em_vacuum := _.EM_Vac.Vac_Cmd#STOP_VACUUM;
+	                END_IF;
+	            ELSE
+	                #cmd_em_vacuum := _.EM_Vac.Vac_Cmd#IDLE;
+	        END_CASE;
+	        
+	    END_REGION
+	    
+	    REGION Outlet Valve: Command     
+	        CASE #step.actual OF
+	            VacHop_Hold_Steps#RESET_STEP:
+	                #cmd_em_outVlv := _.EM_outVlv.OutVlv_Cmd#IDLE;
+	                
+	            ELSE:
+	                #cmd_em_outVlv := _.EM_outVlv.OutVlv_Cmd#HOLD_POSITION;
+	                
+	        END_CASE;
+	                
+	    END_REGION
+	    
+	END_REGION
+	
+	REGION Control Modules: Commands 
+	    //********************************************************
+	    // NA
+	    //********************************************************
+	    
+	END_REGION
+	
+	REGION Feedbacks
+	    // Update feedback statuses
+	    #feedbacks.held := #cm_inPosition AND #em_idleOrDone AND (#step.actual = VacHop_Hold_Steps#HELD) OR (#step.actual = VacHop_Hold_Steps#DONE);
+	    
+	END_REGION
+	
+	REGION Status
+	    // System idle when not activated
+	    #status.idle := NOT #activate;
+	                                    
+	    // System done when hold complete
+	    #status.done := (NOT #status.idle) AND #cm_inPosition AND #em_idleOrDone AND (#step.actual = VacHop_Hold_Steps#DONE);
+	                                    
+	    // System busy during hold sequence
+	    #status.busy := NOT #status.idle AND NOT #status.done;
+	                                    
+	END_REGION
+	
+	                                        
+END_FUNCTION_BLOCK
+END_NAMESPACE

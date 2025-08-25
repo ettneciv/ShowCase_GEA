@@ -1,0 +1,513 @@
+NAMESPACE EM_VacHop
+TYPE VacHop_inputs
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      em_vac_inputs { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.EM_Vac.Vac_inputs;   // EM Vacuum inputs
+      em_outVlv_inputs { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.EM_OutVlv.OutVlv_inputs;   // EM Hopper inputs
+      ventVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vent valve is open
+      ventVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vent valve is closed
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_Discharge_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      na { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_Purge_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      na { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_FlowThrough_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      na { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_interface_modesStatus
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      initialize { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      discharge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      vent { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      openHopper { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      evacuate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      flowThrough { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      purge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      closeHopper { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      hold { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_Evacuate_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      na { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_OpenHopper_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      na { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_parameters_variable
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      transferLineEmptyTime { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UInt := 2;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_CloseHopper_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      na { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_Vent_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      ventTime { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 5;   // Vent Time
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_Hold_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      na { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_parameters_fixed
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      em_vac : _.EM_Vac.Vac_parameters_fixed;   // EM Vacuum: Fixed parameters
+      em_outVlv : _.EM_OutVlv.OutVlv_parameters_fixed;   // EM Hopper: Fixed parameters
+      ventTime { S7_SetPoint := 'True'} : USInt := 5;   // Vent time (de-pressure)
+      dischargeTime { S7_SetPoint := 'True'} : USInt := 40;   // Discharge Time
+      isolationVlvCloseDelay { S7_SetPoint := 'True'} : USInt := 5;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_interface_feedbacks
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      transferLineEmpty { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Transfer lines is empty
+      modes { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct   // Modes feedbacks
+         initialize { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_Initialize_Feedbacks;
+         discharge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_Discharge_Feedbacks;
+         vent { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_Vent_Feedbacks;
+         openHopper { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_OpenHopper_Feedbacks;
+         evacuate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_Evacuate_Feedbacks;
+         flowThrough { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_FlowThrough_Feedbacks;
+         purge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_Purge_Feedbacks;
+         closeHopper { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_CloseHopper_Feedbacks;
+         hold { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_Hold_Feedbacks;
+      END_STRUCT;
+      em_vacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.EM_Vac.Vac_interface_feedbacks;
+      em_hopper { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.EM_OutVlv.OutVlv_interface_feedbacks;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_parameters
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      fixed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_parameters_fixed;
+      variable { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_parameters_variable;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE VacHop_interface
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      cmd { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : VacHop_Cmd;
+      status { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_status;
+      modesStatus { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_interface_modesStatus;
+      feedbacks { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_interface_feedbacks;
+   END_STRUCT;
+
+END_TYPE
+
+FUNCTION_BLOCK EM_VacHop
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      enableStepTransition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := True;   // Enable step transition
+      vacHopInputs { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : VacHop_inputs;   // EM inputs
+      emptyLine { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Request empty line
+   END_VAR
+
+   VAR_OUTPUT 
+      cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      cmd_isolationVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      cmd_vacuumVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      cmd_vacuumControlVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      setpoint_vacuumControlVlv { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Real;
+      cmd_outletVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      cmd_ventVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_VAR
+
+   VAR 
+      interface { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_interface;
+      parameters : VacHop_parameters;
+      _em_vacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.EM_Vac.EM_Vac;   // EM Vacuum instance
+      _em_outVlv { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.EM_OutVlv.EM_OutVlv;   // EM Hopper instance
+      _initialize { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_VacHop_initialize;
+      _discharge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_VacHop_discharge;
+      _vent { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_VacHop_vent;
+      _openHopper { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_VacHop_openHopper;
+      _evacuate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_VacHop_evacuate;
+      _flowThrough { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_VacHop_flowThrough;
+      _purge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_VacHop_purge;
+      _closeHopper { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_VacHop_closeHopper;
+      _hold { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : EM_VacHop_hold;
+      _outputs { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         cmd_ventVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      END_STRUCT;
+   END_VAR
+
+   VAR_TEMP 
+      temp_em_idle_or_done : Bool;
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    //********************************************************
+	    // EM_VacHop Logic
+	    // Description: Handles the Vacuum Hopper initialization process. The initialize block is activated
+	    //********************************************************
+	    
+	    REGION Revision History
+	        (*
+	            Author      Date        Change
+	            GEA-VAR     15MAY25     Initial version
+	        *)
+	    END_REGION
+	    
+	END_REGION
+	
+	REGION Check CM/EM(mode) in position
+	    // Set control module position status
+	    #cm_inPosition :=
+	        #_em_vacuum.cm_inPosition AND #_em_outVlv.cm_inPosition AND 
+	        ((#_outputs.cmd_ventVlvOpen AND #vacHopInputs.ventVlv_isOpen) OR ((NOT #_outputs.cmd_ventVlvOpen) AND #vacHopInputs.ventVlv_isClosed));
+	        
+	    // Check if modes are idle or done
+	    #temp_em_idle_or_done :=
+	        (#_em_vacuum.interface.status.idle OR #_em_vacuum.interface.status.done) AND
+	        (#_em_outVlv.interface.status.idle OR #_em_outVlv.interface.status.done);
+	     
+	END_REGION
+	
+	REGION Initialize
+	    #_initialize(enableStepTransition:=#enableStepTransition,
+	                 activate:=(#interface.cmd = VacHop_Cmd#INITIALIZE),
+	                 cm_inPosition:=#cm_inPosition,
+	                 mode_idleOrDone:=#temp_em_idle_or_done);
+	      
+	END_REGION
+	
+	REGION Discharge
+	    REGION Parameters
+	        #_discharge.parameters.na := FALSE;
+	        
+	    END_REGION
+	     
+	    #_discharge(enableStepTransition:=#enableStepTransition,
+	                activate:=(#interface.cmd = VacHop_Cmd#DISCHARGE),
+	                cm_inPosition:=#cm_inPosition,
+	                em_idleOrDone:=#temp_em_idle_or_done,
+	                em_vacuum_idle:=#_em_vacuum.interface.status.idle,
+	                em_outVlv_outletClose:=#vacHopInputs.em_outVlv_inputs.outletVlv_isClosed);
+	    
+	END_REGION
+	
+	REGION Vent
+	    REGION Parameters
+	        #_vent.parameters.ventTime := #parameters.fixed.ventTime;
+	        
+	    END_REGION
+	     
+	    #_vent(enableStepTransition:=#enableStepTransition,
+	           activate:=(#interface.cmd = VacHop_Cmd#VENT) OR #_initialize.cmd_modeVent,
+	           cm_inPosition:=#cm_inPosition,
+	           em_idleOrDone:=#temp_em_idle_or_done,
+	           em_vacuum_idle:=#_em_vacuum.interface.status.idle,
+	           em_outVlv_outletClose:=#vacHopInputs.em_outVlv_inputs.outletVlv_isClosed);
+	    
+	END_REGION
+	
+	REGION Open Hopper
+	    REGION Parameters
+	        #_openHopper.parameters.na := FALSE;
+	        
+	    END_REGION
+	     
+	    #_openHopper(enableStepTransition:=#enableStepTransition,
+	                 activate := (#interface.cmd = VacHop_Cmd#OPEN_HOPPER),
+	                 cm_inPosition:=#cm_inPosition,
+	                 em_idleOrDone:=#temp_em_idle_or_done,
+	                 em_vacuum_idle:=#_em_vacuum.interface.status.idle,
+	                 em_outVlv_outletClose := #vacHopInputs.em_outVlv_inputs.outletVlv_isClosed);
+	       
+	END_REGION
+	
+	REGION Evacuate
+	    REGION Parameters
+	        #_evacuate.parameters.na := FALSE;
+	        
+	    END_REGION
+	     
+	    #_evacuate(enableStepTransition:=#enableStepTransition,
+	               activate := (#interface.cmd = VacHop_Cmd#EVACUATE),
+	               cm_inPosition:=#cm_inPosition,
+	               em_idleOrDone:=#temp_em_idle_or_done,
+	               em_vacuum_startVacuum_idle:=#_em_vacuum.interface.modesStatus.startVacuum.idle,
+	               em_outVlv_outletClose := #vacHopInputs.em_outVlv_inputs.outletVlv_isClosed);
+	    
+	END_REGION
+	
+	REGION Flowthrough
+	    REGION Parameters
+	        #_flowThrough.parameters.na := FALSE;
+	        
+	    END_REGION
+	     
+	    // Activate stop logic when STOP_VACUUM command is issued or initialize requires it
+	    #_flowThrough(activate := (#interface.cmd = VacHop_Cmd#FLOWTHROUGHT),
+	                  cm_inPosition:=#cm_inPosition,
+	                  em_idleOrDone:=#temp_em_idle_or_done,
+	                  em_vacuum_startVacuum_idle:=#_em_vacuum.interface.modesStatus.startVacuum.idle,
+	                  em_outVlv_outletClose := #vacHopInputs.em_outVlv_inputs.outletVlv_isClosed);
+	    
+	END_REGION
+	
+	REGION Purge
+	    REGION Parameters
+	        #_purge.parameters.na := FALSE;
+	        
+	    END_REGION
+	    
+	    #_purge(enableStepTransition:=#enableStepTransition,
+	            activate := (#interface.cmd = VacHop_Cmd#PURGE),
+	            cm_inPosition:=#cm_inPosition,
+	            em_idleOrDone:=#temp_em_idle_or_done,
+	            em_vacuum_idle:=#_em_vacuum.interface.status.idle,
+	            em_outVlv_outletClose := #vacHopInputs.em_outVlv_inputs.outletVlv_isClosed);
+	END_REGION
+	
+	REGION Close Hopper
+	    REGION Parameters
+	        #_closeHopper.parameters.na := FALSE;
+	        
+	    END_REGION
+	    
+	    #_closeHopper(enableStepTransition:=#enableStepTransition,
+	                  activate := (#interface.cmd = VacHop_Cmd#CLOSE_HOPPER),
+	                  cm_inPosition := #cm_inPosition,
+	                  em_idleOrDone := #temp_em_idle_or_done,
+	                  em_vacuum_idle := #_em_vacuum.interface.status.idle,
+	                  em_outVlv_outletClose := #vacHopInputs.em_outVlv_inputs.outletVlv_isClosed);
+	   
+	END_REGION
+	
+	REGION Hold
+	    REGION Parameters
+	        #_hold.parameters.na := FALSE;
+	        
+	    END_REGION
+	    
+	    #_hold(enableStepTransition:=#enableStepTransition,
+	           activate := (#interface.cmd = VacHop_Cmd#HOLD),
+	           cm_inPosition := #cm_inPosition,
+	           em_idleOrDone := #temp_em_idle_or_done,
+	           em_vacuum_idle := #_em_vacuum.interface.status.idle);
+	    
+	END_REGION
+	
+	
+	//********************************************************
+	// Region: Command Mapping
+	//********************************************************
+	REGION Commands
+	    REGION Equipment Modules
+	        REGION Vacuum
+	            REGION Parameters
+	                // Fixed
+	                #_em_vacuum.parameters.fixed := #parameters.fixed.em_vac;
+	                
+	                // Variable
+	                #_em_vacuum.parameters.variable.isolationVlvCloseDelay := #parameters.fixed.isolationVlvCloseDelay;
+	                #_em_vacuum.parameters.variable.minTimeLineEmpty := #parameters.variable.transferLineEmptyTime;
+	                
+	            END_REGION
+	            
+	            
+	            REGION Control/Command
+	                #_em_vacuum.interface.cmd := MAX_USINT(IN1 := #_initialize.cmd_em_vacuum,
+	                                                       IN2 := #_discharge.cmd_em_vacuum,
+	                                                       IN3 := #_vent.cmd_em_vacuum,
+	                                                       IN4 := #_openHopper.cmd_em_vacuum,
+	                                                       IN5 := #_evacuate.cmd_em_vacuum,
+	                                                       IN6 := #_flowThrough.cmd_em_vacuum,
+	                                                       IN7 := #_purge.cmd_em_vacuum,
+	                                                       IN8 := #_closeHopper.cmd_em_vacuum,
+	                                                       IN9 := #_hold.cmd_em_vacuum);
+	            END_REGION
+	            
+	            #_em_vacuum(enableStepTransition:=#enableStepTransition,
+	                        vacuumInputs:=#vacHopInputs.em_vac_inputs,
+	                        emptyLine:=#emptyLine,
+	                        cmd_isolationVlvOpen=>#cmd_isolationVlvOpen,
+	                        cmd_vacuumVlvOpen=>#cmd_vacuumVlvOpen,
+	                        setpoint_vacuumControlVlv=>#setpoint_vacuumControlVlv);
+	            
+	        END_REGION
+	        
+	        REGION Hopper
+	            REGION Parameters
+	                // Fixed
+	                #_em_outVlv.parameters.fixed := #parameters.fixed.em_outVlv;
+	                
+	                // Variable
+	                #_em_outVlv.parameters.variable.dischargeTime := #parameters.fixed.dischargeTime;
+	                
+	            END_REGION
+	            
+	            REGION Control/Command
+	                #_em_outVlv.interface.cmd := MAX_USINT(IN1 := #_initialize.cmd_em_outVlv,
+	                                                       IN2 := #_discharge.cmd_em_outVlv,
+	                                                       IN3 := #_vent.cmd_em_outVlv,
+	                                                       IN4 := #_openHopper.cmd_em_outVlv,
+	                                                       IN5 := #_evacuate.cmd_em_outVlv,
+	                                                       IN6 := #_flowThrough.cmd_em_outVlv,
+	                                                       IN7 := #_purge.cmd_em_outVlv,
+	                                                       IN8 := #_closeHopper.cmd_em_outVlv,
+	                                                       IN9 := #_hold.cmd_em_outVlv);
+	            END_REGION
+	            
+	            #_em_outVlv(enableStepTransition:=#enableStepTransition,
+	                        outletValveInputs:=#vacHopInputs.em_outVlv_inputs,
+	                        cmd_outletVlvOpen=>#cmd_outletVlvOpen);
+	            
+	        END_REGION
+	        
+	    END_REGION
+	    
+	    REGION Control Modules
+	        #cmd_ventVlvOpen := #_outputs.cmd_ventVlvOpen := #_vent.cmd_ventVlvOpen;
+	        
+	    END_REGION
+	END_REGION
+	
+	
+	REGION Feedbacks
+	    #interface.feedbacks.transferLineEmpty := #interface.feedbacks.em_vacuum.modes.startVacuum.minTimeLineEmptyReached;
+	    
+	    REGION Modes
+	        #interface.feedbacks.modes.initialize := #_initialize.feedbacks;
+	        #interface.feedbacks.modes.discharge := #_discharge.feedbacks;
+	        #interface.feedbacks.modes.vent := #_vent.feedbacks;
+	        #interface.feedbacks.modes.openHopper := #_openHopper.feedbacks;
+	        #interface.feedbacks.modes.evacuate := #_evacuate.feedbacks;
+	        #interface.feedbacks.modes.flowThrough := #_flowThrough.feedbacks;
+	        #interface.feedbacks.modes.purge := #_purge.feedbacks;
+	        #interface.feedbacks.modes.closeHopper := #_closeHopper.feedbacks;
+	        #interface.feedbacks.modes.hold := #_hold.feedbacks;
+	        
+	    END_REGION
+	    
+	    REGION Equipment Modules
+	        #interface.feedbacks.em_vacuum := #_em_vacuum.interface.feedbacks;
+	        #interface.feedbacks.em_hopper := #_em_outVlv.interface.feedbacks;
+	        
+	    END_REGION
+	    
+	    
+	END_REGION
+	
+	
+	REGION Check CM/EM(mode) in position
+	    // Set control module position status
+	    #cm_inPosition := #_em_vacuum.cm_inPosition AND #_em_outVlv.cm_inPosition AND
+	        ((#_outputs.cmd_ventVlvOpen AND #vacHopInputs.ventVlv_isOpen) OR ((NOT #_outputs.cmd_ventVlvOpen) AND #vacHopInputs.ventVlv_isClosed));
+	    
+	    // Check if modes are idle or done
+	    #temp_em_idle_or_done :=
+	        (#_em_vacuum.interface.status.idle OR #_em_vacuum.interface.status.done) AND
+	        (#_em_outVlv.interface.status.idle OR #_em_outVlv.interface.status.done);
+	    
+	END_REGION
+	
+	REGION Status
+	    #interface.status.done :=
+	        #_initialize.status.done OR #_discharge.status.done OR #_openHopper.status.done OR #_evacuate.status.done OR #_flowThrough.status.done OR #_purge.status.done OR #_closeHopper.status.done OR #_hold.status.done OR
+	        ((NOT #_initialize.status.busy) AND #_vent.status.done);
+	    #interface.status.busy :=
+	        #_initialize.status.busy OR #_discharge.status.busy OR #_vent.status.busy OR #_openHopper.status.busy OR #_evacuate.status.busy OR #_flowThrough.status.busy OR #_purge.status.busy OR #_closeHopper.status.busy OR #_hold.status.busy;
+	    #interface.status.idle := NOT (#interface.status.busy OR #interface.status.done);
+	    #interface.status.stopAlmActive := _.EM.TODO.alm;
+	    #interface.status.abortAlmActive := _.EM.TODO.alm;
+	    
+	    // Modes
+	    #interface.modesStatus.initialize := #_initialize.status;
+	    #interface.modesStatus.discharge := #_discharge.status;
+	    #interface.modesStatus.vent := #_vent.status;
+	    #interface.modesStatus.openHopper := #_openHopper.status;
+	    #interface.modesStatus.evacuate := #_evacuate.status;
+	    #interface.modesStatus.flowThrough := #_flowThrough.status;
+	    #interface.modesStatus.purge := #_purge.status;
+	    #interface.modesStatus.closeHopper := #_closeHopper.status;
+	    #interface.modesStatus.hold := #_hold.status;
+	    
+	END_REGION
+	
+END_FUNCTION_BLOCK
+END_NAMESPACE

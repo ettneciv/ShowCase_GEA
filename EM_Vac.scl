@@ -1,0 +1,276 @@
+NAMESPACE EM_Vac
+TYPE Vac_inputs
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      AHU_minAirflowReached { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // AHU Minimum airflow reached
+      vacuumAirflow_PV { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Real;   // Airflow process value
+      vacuumVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vacuum valve is open
+      vacuumVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vacuum valve is closed
+      isolationVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Isolation valve is open
+      isolationVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Isolation valve is closed
+   END_STRUCT;
+
+END_TYPE
+
+TYPE Vac_parameters_variable
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      isolationVlvCloseDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 30;   // Isolation Valve: Close delay
+      minTimeLineEmpty { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UInt;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE Vac_parameters_fixed
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      vacuumMinAirFlow { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Real := 2.0;   // Vacuum: Minimum vacuum airflow required for proper operation
+      vacuumMaxAirFlow { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Real := 10.0;   // Vacuum: Maximum vacuum airflow during operation
+      vacuumBuildUpTimer { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 10;   // Vacuum: Duration of the vacuum buildup
+      vacuumVlvCloseDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 5;   // Vacuum Valve: Close delay
+      vacuumControlMinOpening { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 0;   // Vacuum Control Valve: Minimum opening position.
+      vacuumControlSP { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 45;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE Vac_StopVacuum_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      isolationVlvCloseDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 5;   // Isolation Valve: Close delay
+      vacuumVlvCloseDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 30;   // Vacuum Valve: Close delay
+      vacuumControlSP { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 45;   // Vacuum Control Valve: Setpoint.
+      vacuumControlMinOpening { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 10;   // Vacuum Control Valve: Minimum opening position.
+   END_STRUCT;
+
+END_TYPE
+
+TYPE Vac_StartVacuum_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      minVacuumAirFlow { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Real := 5.0;   // Minimum vacuum airflow required for proper operation
+      vacuumBuildUpTimer { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 30;   // Duration of the vacuum buildup
+      vacuumControlSP { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 45;   // Vacuum Control Valve: Setpoint.
+      vacuumControlMinOpening { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt;   // Vacuum Control Valve: Minimum opening position.
+      minTimeLineEmpty { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : UInt := 2;   // Minimum time for empty the transfer Line
+   END_STRUCT;
+
+END_TYPE
+
+TYPE Vac_interface_modesStatus
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      initialize { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      startVacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      stopVacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE Vac_interface_feedbacks
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      isolationVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Vacuum active and Isolation valve is open
+      modes { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct   // Modes feedbacks
+         initialize { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : Vac_Initialize_Feedbacks;   // Initialize feedbacks
+         startVacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : Vac_StartVacuum_Feedbacks;   // Start Vacuum feedbacks
+         stopVacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : Vac_StopVacuum_Feedbacks;   // Stop Vacuum feedbacks
+      END_STRUCT;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE Vac_interface
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      cmd { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Vac_Cmd;
+      status { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_status;
+      modesStatus { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : Vac_interface_modesStatus;
+      feedbacks { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : Vac_interface_feedbacks;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE Vac_parameters
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      fixed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : Vac_parameters_fixed;
+      variable { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : Vac_parameters_variable;
+   END_STRUCT;
+
+END_TYPE
+
+FUNCTION_BLOCK EM_Vac
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      enableStepTransition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := True;   // Enable step transition
+      vacuumInputs { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Vac_inputs;   // EM inputs
+      emptyLine { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Request empty line
+   END_VAR
+
+   VAR_OUTPUT 
+      cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM in position
+      cmd_isolationVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Command to open isolation valve
+      cmd_vacuumVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Command to open vacuum valve
+      setpoint_vacuumControlVlv { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Real;   // Vacuum control valve setpoint
+   END_VAR
+
+   VAR 
+      interface { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : Vac_interface;
+      parameters : Vac_parameters;
+      _initialize { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_Vac_initialize;
+      _startVacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_Vac_startVacuum;
+      _stopVacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_Vac_stopVacuum;
+      _outputs { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         cmd_isolationVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+         cmd_vacuumVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      END_STRUCT;
+   END_VAR
+
+   VAR_TEMP 
+      temp_modes_idle_or_done : Bool;   // excluding "Initialize mode"
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    //********************************************************
+	    // EM_Vac Logic
+	    // Description: 
+	    // - Main controller for the vacuum system, managing initialization, start, and stop sequences.
+	    //********************************************************
+	        
+	    REGION Revision History
+	        (*
+	            Author      Date        Change
+	            GEA-VAR     15MAY25     Initial version
+	        *)
+	    END_REGION
+	        
+	END_REGION
+	    
+	REGION Check CM/EM(mode) in position
+	    // Set control module position status
+	    #cm_inPosition :=
+	        ((#_outputs.cmd_isolationVlvOpen AND #vacuumInputs.isolationVlv_isOpen) OR ((NOT #_outputs.cmd_isolationVlvOpen) AND #vacuumInputs.isolationVlv_isClosed)) AND
+	        ((#_outputs.cmd_vacuumVlvOpen AND #vacuumInputs.vacuumVlv_isOpen) OR ((NOT #_outputs.cmd_vacuumVlvOpen) AND #vacuumInputs.vacuumVlv_isClosed));
+	        
+	    // Check if modes are idle or done
+	    #temp_modes_idle_or_done :=
+	        (#_startVacuum.status.idle OR #_startVacuum.status.done) AND
+	        (#_stopVacuum.status.idle OR #_stopVacuum.status.done);
+	    
+	END_REGION
+	 
+	REGION Initialize
+	    // Run initialization sequence
+	    #_initialize(en_stepTrans:=#enableStepTransition,
+	                 activate:=(#interface.cmd = Vac_Cmd#INITIALIZE),
+	                 cm_inPosition:=#cm_inPosition,
+	                 mode_idleOrDone:=#temp_modes_idle_or_done);
+	     
+	END_REGION
+	
+	REGION Start Vacuum
+	    // Configure parameters for start sequence
+	    REGION Parameters
+	        #_startVacuum.parameters.minVacuumAirFlow := #parameters.fixed.vacuumMinAirFlow;
+	        #_startVacuum.parameters.vacuumBuildUpTimer := #parameters.fixed.vacuumBuildUpTimer;
+	        #_startVacuum.parameters.vacuumControlSP := #parameters.fixed.vacuumControlSP;
+	        #_startVacuum.parameters.vacuumControlMinOpening := #parameters.fixed.vacuumControlMinOpening;
+	        #_startVacuum.parameters.minTimeLineEmpty := #parameters.variable.minTimeLineEmpty;
+	    END_REGION 
+	    
+	    // Activate start sequence on command
+	    #_startVacuum(enableStepTransition:=#enableStepTransition,
+	                  activate := (#interface.cmd = Vac_Cmd#START_VACUUM) OR #_initialize.cmd_modeStartVacuum,
+	                  emptyLine:=#emptyLine,
+	                  cm_inPosition:=#cm_inPosition,
+	                  AHU_minAirflowReached := #vacuumInputs.AHU_minAirflowReached,
+	                  vacuumAirflow_PV := #vacuumInputs.vacuumAirflow_PV);
+	END_REGION
+	
+	REGION Stop Vacuum
+	    // Configure parameters for stop sequence
+	    REGION Parameters
+	        #_stopVacuum.parameters.isolationVlvCloseDelay := #parameters.variable.isolationVlvCloseDelay;
+	        #_stopVacuum.parameters.vacuumVlvCloseDelay := #parameters.fixed.vacuumVlvCloseDelay;
+	        #_stopVacuum.parameters.vacuumControlSP := #parameters.fixed.vacuumControlSP;
+	        #_stopVacuum.parameters.vacuumControlMinOpening := #parameters.fixed.vacuumControlMinOpening;
+	        
+	    END_REGION
+	    
+	    // Activate stop sequence on command
+	    #_stopVacuum(enableStepTransition:=#enableStepTransition,
+	                 activate := (#interface.cmd = Vac_Cmd#STOP_VACUUM) OR #_initialize.cmd_modeStopVacuum,
+	                 cm_inPosition:=#cm_inPosition,
+	                 vacuumVlv_isOpen := #vacuumInputs.vacuumVlv_isOpen,
+	                 vacuumVlv_isClosed := #vacuumInputs.vacuumVlv_isClosed,
+	                 isolationVlv_isOpen := #vacuumInputs.isolationVlv_isOpen,
+	                 isolationVlv_isClosed := #vacuumInputs.isolationVlv_isClosed);
+	    
+	END_REGION
+	
+	REGION Outputs
+	    // Aggregate valve commands
+	    #cmd_isolationVlvOpen := #_outputs.cmd_isolationVlvOpen := #_startVacuum.cmd_isolationVlvOpen OR #_stopVacuum.cmd_isolationVlvOpen;
+	    #cmd_vacuumVlvOpen := #_outputs.cmd_vacuumVlvOpen := #_startVacuum.cmd_vacuumVlvOpen OR #_stopVacuum.cmd_vacuumVlvOpen;
+	    
+	    // Select maximum setpoint for valve
+	    #setpoint_vacuumControlVlv := MAX_REAL(IN1 := #_startVacuum.setpoint_vacuumControlVlv, IN2 := #_stopVacuum.setpoint_vacuumControlVlv);
+	    
+	END_REGION
+	
+	REGION Feedbacks
+	    #interface.feedbacks.isolationVlvOpen := (NOT #_startVacuum.status.idle) AND #vacuumInputs.isolationVlv_isOpen;
+	    // Update mode feedbacks
+	    REGION Modes
+	        #interface.feedbacks.modes.initialize := #_initialize.feedbacks;
+	        #interface.feedbacks.modes.startVacuum := #_startVacuum.feedbacks;
+	        #interface.feedbacks.modes.stopVacuum := #_stopVacuum.feedbacks;
+	    END_REGION
+	    
+	END_REGION
+	
+	REGION Check CM/EM(mode) in position
+	    // Set control module position status
+	    #cm_inPosition :=
+	    ((#_outputs.cmd_isolationVlvOpen AND #vacuumInputs.isolationVlv_isOpen) OR ((NOT #_outputs.cmd_isolationVlvOpen) AND #vacuumInputs.isolationVlv_isClosed)) AND
+	    ((#_outputs.cmd_vacuumVlvOpen AND #vacuumInputs.vacuumVlv_isOpen) OR ((NOT #_outputs.cmd_vacuumVlvOpen) AND #vacuumInputs.vacuumVlv_isClosed));
+	    
+	    // Check if modes are idle or done
+	    #temp_modes_idle_or_done := (#_startVacuum.status.idle OR #_startVacuum.status.done) AND (#_stopVacuum.status.idle OR #_stopVacuum.status.done);
+	    
+	    
+	END_REGION
+	
+	REGION Status
+	    // Set overall and mode statuses
+	    #interface.status.done := #_initialize.status.done OR
+	        ((NOT #_initialize.status.busy) AND (#_startVacuum.status.done OR #_stopVacuum.status.done));
+	    #interface.status.busy := #_initialize.status.busy OR #_startVacuum.status.busy OR #_stopVacuum.status.busy OR (#interface.status.busy AND (NOT #cm_inPosition));
+	    #interface.status.idle := (NOT (#interface.status.busy OR #interface.status.done)) AND #cm_inPosition AND #temp_modes_idle_or_done AND #_initialize.status.idle;
+	    #interface.status.stopAlmActive := _.EM.TODO.alm;
+	    #interface.status.abortAlmActive := _.EM.TODO.alm;
+	    
+	    // Modes
+	    #interface.modesStatus.initialize := #_initialize.status;
+	    #interface.modesStatus.startVacuum := #_startVacuum.status;
+	    #interface.modesStatus.stopVacuum := #_stopVacuum.status;
+	    
+	END_REGION
+	
+END_FUNCTION_BLOCK
+END_NAMESPACE

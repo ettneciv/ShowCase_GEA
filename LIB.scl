@@ -1,0 +1,103 @@
+﻿NAMESPACE LIB
+TYPE Util_Step
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      actual { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Int := Util_Step_Constants#RESET_STEP;   // Current step number
+      firstCycle { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True on first cycle of step
+      actualTimer { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Time;   // Elapsed time in step (ms)
+   END_STRUCT;
+
+END_TYPE
+END_NAMESPACE
+
+NAMESPACE LIB
+TYPE Util_modeStatus
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      idle { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the mode is idle (not active)
+      done { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the mode has completed
+      busy { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the mode is actively executing
+   END_STRUCT;
+
+END_TYPE
+END_NAMESPACE
+
+NAMESPACE LIB
+FUNCTION IsTimerExceeded : Bool
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      actualTimer : Time;   // current step timer (Time)
+      limit : UInt;   // Time delay parameter (second)
+   END_VAR
+
+   VAR CONSTANT 
+      MILLIS_PER_SECOND : UDInt := 1000;
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    //********************************************************
+	    // IsTimerExceeded Logic
+	    // Description: 
+	    // - Checks if actualTimer (ms) exceeds limit (seconds) converted to ms.
+	    // - Returns TRUE if elapsed time exceeds threshold, FALSE otherwise.
+	    //********************************************************
+	    
+	    REGION Revision History
+	        (*
+	        Author      Date        Change
+	        VAR         05MAY25     Initial version
+	        *)
+	    END_REGION
+	END_REGION
+	
+	#IsTimerExceeded := (TIME_TO_UDINT(#actualTimer) > (UINT_TO_UDINT(#limit) * #MILLIS_PER_SECOND));
+END_FUNCTION
+END_NAMESPACE
+
+NAMESPACE LIB
+TYPE Util_status
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      idle { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the process is idle (not running)
+      done { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the process has completed successfully
+      busy { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the process is actively running
+      stopAlmActive { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when a stop alarm is active
+      abortAlmActive { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when an abort alarm is active
+   END_STRUCT;
+
+END_TYPE
+END_NAMESPACE
+
+NAMESPACE EM
+DATA_BLOCK TODO
+{ DB_Accessible_From_OPC_UA := 'FALSE' ;
+ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+NON_RETAIN
+   VAR 
+      alm { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      "bool" { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      isolationVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      isolationVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      vacuumVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      vacuumVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      vacuumControlVlv_cmdOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      setpoint_vacuumControlVlv { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Real;
+      isolationVlv_cmdOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      vacuumVlv_cmdOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      vacHop_inputs : _.EM_VacHop.VacHop_inputs;
+   END_VAR
+
+
+BEGIN
+   vacHop_inputs.em_vac_inputs.AHU_minAirflowReached := true;
+
+END_DATA_BLOCK
+END_NAMESPACE
+

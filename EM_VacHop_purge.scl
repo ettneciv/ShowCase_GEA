@@ -1,0 +1,166 @@
+NAMESPACE EM_VacHop
+TYPE VacHop_Purge_Feedbacks
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      na { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_STRUCT;
+
+END_TYPE
+
+FUNCTION_BLOCK EM_VacHop_purge
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      enableStepTransition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := true;   // Enable Step Transition
+      parameters { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : VacHop_Purge_Params;   // Purge parameters
+      activate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Activate purge sequence
+      cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM in position
+      em_idleOrDone { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // EM Idle or Done
+      em_vacuum_idle { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // EM Vacuum: Start Vacuum mode idle
+      em_outVlv_outletClose { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // EM_OutVlv: outlet valve is closed
+   END_VAR
+
+   VAR_OUTPUT 
+      cmd_em_vacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : _.EM_Vac.Vac_Cmd;   // EM_Vac command
+      cmd_em_outVlv { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : _.EM_OutVlv.OutVlv_Cmd;   // EM_OutVlv command
+   END_VAR
+
+   VAR 
+      status { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;   // Mode status
+      feedbacks { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_Purge_Feedbacks;   // Feedbacks
+      step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_Step;   // Step status
+      _step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Step;   // Step instance
+      _stepTracker { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         actual { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : VacHop_Purge_Steps;   // Current step
+         next { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : VacHop_Purge_Steps;   // Next step
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    //********************************************************
+	    // EM_VacHop_purge Logic
+	    // Description: 
+	    // - Manages the purge sequence for the vacuum hopper by opening the outlet valve to allow a burst of purge.
+	    //********************************************************
+	    
+	    REGION Revision History
+	        (*
+	        Author      Date        Change
+	        GEA-VAR     2025-05-15  Initial version
+	        *)
+	    END_REGION
+	END_REGION
+	
+	REGION Step 
+	    IF #activate THEN
+	        CASE #step.actual OF
+	                // Idle state, no sequence active
+	            VacHop_Purge_Steps#INITIAL:
+	                #_stepTracker.next := VacHop_Purge_Steps#STOP_VACUUM;
+	                
+	                // Stop vacuum system 
+	            VacHop_Purge_Steps#STOP_VACUUM:
+	                #_stepTracker.next := VacHop_Purge_Steps#PURGE;
+	                
+	                //  Purge hopper
+	            VacHop_Purge_Steps#PURGE:
+	                #_stepTracker.next := VacHop_Purge_Steps#DONE;
+	                
+	                //  Purge sequence complete
+	            VacHop_Purge_Steps#DONE:
+	                ;
+	                
+	                // Handle invalid step
+	            ELSE
+	                // Reset to idle on invalid step
+	                #step.actual := #_stepTracker.next := VacHop_Purge_Steps#INITIAL;
+	        END_CASE;
+	        
+	        // Advance step when module positioned
+	        IF #enableStepTransition AND #cm_inPosition AND #em_idleOrDone THEN
+	            #step.actual := #_stepTracker.next;
+	        END_IF;
+	        
+	    END_IF;
+	    
+	    // Manage step transitions and reset
+	    #_step(forceReset := NOT #activate,
+	           step := #step);
+	    #_stepTracker.actual := #step.actual;
+	END_REGION
+	
+	
+	REGION Equipment Modules   
+	    REGION Vacuum: Commands      
+	        CASE #step.actual OF
+	            VacHop_Purge_Steps#INITIAL..VacHop_Purge_Steps#STOP_VACUUM:
+	                // Stop vacuum or wait for idle
+	                IF #em_vacuum_idle THEN
+	                    #cmd_em_vacuum := _.EM_Vac.Vac_Cmd#IDLE;
+	                ELSE
+	                    #cmd_em_vacuum := _.EM_Vac.Vac_Cmd#STOP_VACUUM;
+	                END_IF;
+	            ELSE
+	                // Maintain vacuum idle
+	                #cmd_em_vacuum := _.EM_Vac.Vac_Cmd#IDLE;
+	        END_CASE;
+	        
+	    END_REGION
+	    
+	    REGION Outlet Valve: Command             
+	        CASE #step.actual OF
+	            VacHop_Purge_Steps#INITIAL..VacHop_Purge_Steps#STOP_VACUUM:
+	                // Close outlet valve or wait
+	                IF NOT #em_outVlv_outletClose THEN
+	                    #cmd_em_outVlv := _.EM_outVlv.OutVlv_Cmd#CLOSE_OUTLET;
+	                ELSE
+	                    #cmd_em_outVlv := _.EM_outVlv.OutVlv_Cmd#IDLE;
+	                    
+	                END_IF;
+	                
+	            VacHop_Purge_Steps#PURGE:
+	                // Purge outlet valve
+	                #cmd_em_outVlv := _.EM_outVlv.OutVlv_Cmd#PURGE;
+	                
+	            ELSE
+	                // Maintain outlet valve idle
+	                #cmd_em_outVlv := _.EM_outVlv.OutVlv_Cmd#IDLE;
+	                
+	        END_CASE;
+	        
+	    END_REGION
+	    
+	END_REGION
+	
+	REGION Control Modules: Commands 
+	    //********************************************************
+	    // NA
+	    //********************************************************
+	    
+	END_REGION
+	//********************************************************
+	// Region: #Feedback Handling
+	//********************************************************
+	REGION Feedbacks
+	    // na
+	    
+	END_REGION
+	
+	REGION Status
+	    // System idle when not activated
+	    #status.idle := NOT #activate;
+	                                    
+	    // System done when purge complete
+	    #status.done := (NOT #status.idle) AND #cm_inPosition AND #em_idleOrDone AND (#step.actual = VacHop_Purge_Steps#DONE);
+	                                    
+	    // System busy during purge sequence
+	    #status.busy := NOT #status.idle AND NOT #status.done;
+	                                    
+	END_REGION
+	
+	                                        
+END_FUNCTION_BLOCK
+END_NAMESPACE

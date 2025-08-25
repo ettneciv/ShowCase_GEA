@@ -1,0 +1,360 @@
+NAMESPACE EM_OutVlv
+TYPE OutVlv_inputs
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      outletVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is open
+      outletVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is closed
+   END_STRUCT;
+
+END_TYPE
+
+TYPE OutVlv_interface_modesStatus
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      initialize { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      openOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      closeOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      purge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      discharge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+      holdPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE OutVlv_OpenOutlet_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      vlvOpenDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt;   // Valve open delay
+   END_STRUCT;
+
+END_TYPE
+
+TYPE OutVlv_CloseOutlet_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      vlvCloseDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 5;   // Valve Close delay
+   END_STRUCT;
+
+END_TYPE
+
+TYPE OutVlv_parameters_fixed
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      purgeStartDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 20;   // Purge: start delay
+      purgeCount { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 5;   // Purge: count
+      purgeOutletVlvOpenDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 2;   // Purge: Outlet Valve Open delay
+      purgeOutletVlvCloseDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 2;   // Purge: Outlet Valve Close delay
+      outletVlvOpenDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 1;
+      outletVlvCloseDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 5;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE OutVlv_parameters_variable
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      dischargeTime { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 40;   // Discharge time
+   END_STRUCT;
+
+END_TYPE
+
+TYPE OutVlv_Purge_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      startDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 10;   // Purse start delay
+      count { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 5;   // Purge Count
+      outletVlvOpenDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 2;   // Outlet valve: open delay during purge
+      outletVlvCloseDelay { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 2;   // Outlet valve: open delay during purge
+   END_STRUCT;
+
+END_TYPE
+
+TYPE OutVlv_Discharge_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      dischargeTime { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : USInt := 40;   // Discharge Time
+   END_STRUCT;
+
+END_TYPE
+
+TYPE OutVlv_HoldPosition_Params
+{ Published := 'TRUE' }
+VERSION : 0.1
+// This UDT is not published for external use
+   STRUCT
+      na { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE OutVlv_interface_feedbacks
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      outletOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is open
+      openingOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Opening outlet valve
+      outletClose { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Outlet valve is closed
+      closingOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Closing outlet valve
+      held { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Last position
+      modes { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct   // Modes feedbacks
+         initialize { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_Initialize_Feedbacks;   // Initialize feedbacks
+         openOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_OpenOutlet_Feedbacks;   // Open Outlet feedbacks
+         closeOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_CloseOutlet_Feedbacks;   // Close Outlet feedbacks
+         purge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_Purge_Feedbacks;   // Purge feedbacks
+         discharge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_Discharge_Feedbacks;   // Discharge feedbacks
+         holdPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_HoldPosition_Feedbacks;   // Hold position feedbacks
+      END_STRUCT;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE OutVlv_parameters
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      fixed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_parameters_fixed;
+      variable { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_parameters_variable;
+   END_STRUCT;
+
+END_TYPE
+
+TYPE OutVlv_interface
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      cmd { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_Cmd;
+      status { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_status;
+      modesStatus { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_interface_modesStatus;
+      feedbacks { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_interface_feedbacks;
+   END_STRUCT;
+
+END_TYPE
+
+FUNCTION_BLOCK EM_OutVlv
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      enableStepTransition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := True;   // Enable step transition
+      outletValveInputs { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : OutVlv_inputs;   // EM inputs
+   END_VAR
+
+   VAR_OUTPUT 
+      cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM in position
+      cmd_outletVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Command: outlet valve open
+   END_VAR
+
+   VAR 
+      interface { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : OutVlv_interface;
+      parameters : OutVlv_parameters;
+      _initialize { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_OutVlv_initialize;
+      _purge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_OutVlv_purge;
+      _discharge { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_OutVlv_discharge;
+      _holdPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_OutVlv_holdPosition;
+      _openOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_OutVlv_openOutlet;
+      _closeOutlet { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : EM_OutVlv_closeOutlet;
+      _outputs { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         cmd_outletVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      END_STRUCT;
+   END_VAR
+
+   VAR_TEMP 
+      temp_mode_idle_or_done : Bool;
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    //********************************************************
+	    // EM_OutVlv Logic
+	    // Description: 
+	    // - Main controller for the outlet valvce system.
+	    //********************************************************
+	    
+	    REGION Revision History
+	        (*
+	            Author      Date        Change
+	            GEA-VAR     15MAY25     Initial version
+	        *)
+	    END_REGION
+	    
+	END_REGION
+	
+	REGION Check CM/EM(mode) in position
+	    // Set control module position status
+	    #cm_inPosition :=
+	        (#_outputs.cmd_outletVlvOpen AND #outletValveInputs.outletVlv_isOpen) OR
+	        ((NOT #_outputs.cmd_outletVlvOpen) AND #outletValveInputs.outletVlv_isClosed);
+	        
+	    #temp_mode_idle_or_done :=
+	        (#_openOutlet.status.idle OR #_openOutlet.status.done) AND
+	        (#_closeOutlet.status.idle OR #_closeOutlet.status.done);
+	        
+	END_REGION
+	
+	REGION Initialize 
+	    // Run initialization sequence 
+	    #_initialize(enableStepTransition:=#enableStepTransition,
+	                 activate:=(#interface.cmd = OutVlv_Cmd#INITIALIZE),
+	                 cm_inPosition:=#cm_inPosition,
+	                 mode_idleOrDone:=#temp_mode_idle_or_done);  
+	     
+	END_REGION
+	
+	REGION Purge 
+	    REGION Parameters
+	        // Configure parameters for the purge count
+	        #_purge.parameters.startDelay := #parameters.fixed.purgeStartDelay;
+	        #_purge.parameters.count := #parameters.fixed.purgeCount;
+	        #_purge.parameters.outletVlvOpenDelay := #parameters.fixed.purgeOutletVlvOpenDelay;
+	        #_purge.parameters.outletVlvCloseDelay := #parameters.fixed.purgeOutletVlvCloseDelay;
+	        
+	    END_REGION
+	    
+	    // Activate Purge sequence on command 
+	    #_purge(enableStepTransition:=#enableStepTransition,
+	            activate := (#interface.cmd = OutVlv_Cmd#PURGE),
+	            cm_inPosition:=#cm_inPosition,
+	            mode_idleOrDone:=#temp_mode_idle_or_done,
+	            outletVlv_isOpen:=#outletValveInputs.outletVlv_isOpen);
+	END_REGION
+	
+	REGION Discharge
+	    // Configure parameters for the discharge mode
+	    REGION Parameters
+	        #_discharge.parameters.dischargeTime := #parameters.variable.dischargeTime;
+	        
+	    END_REGION
+	    
+	    // Activate Purge sequence on command
+	    #_discharge(enableStepTransition:=#enableStepTransition,
+	                activate := (#interface.cmd = OutVlv_Cmd#DISCHARGE),
+	                cm_inPosition:=#cm_inPosition,
+	                mode_idleOrDone:=#temp_mode_idle_or_done);
+	END_REGION
+	
+	REGION Hold Position
+	    // Configure parameters for the Hold Position mode
+	    REGION Parameters
+	        #_holdPosition.parameters.na := FALSE;
+	        
+	    END_REGION
+	     
+	    // Activate Hold Position sequence on command
+	    #_holdPosition(enableStepTransition:=#enableStepTransition,
+	                   activate := (#interface.cmd = OutVlv_Cmd#HOLD_POSITION),
+	                   cm_inPosition := #cm_inPosition,
+	                   mode_idleOrDone := #temp_mode_idle_or_done,
+	                   outletVlv_isClosed:=#outletValveInputs.outletVlv_isClosed);
+	END_REGION
+	
+	REGION Open Outlet
+	    // Configure parameters for the open outlet delay
+	    REGION Parameters
+	        IF #_purge.cmd_modeOpenOutlet THEN
+	            #_openOutlet.parameters.vlvOpenDelay := #_purge.parameters.outletVlvOpenDelay;
+	        ELSE
+	            #_openOutlet.parameters.vlvOpenDelay := #parameters.fixed.outletVlvOpenDelay;
+	        END_IF;
+	        
+	    END_REGION
+	     
+	    // Activate Open Outlet sequence when commanded or required by initialization, purge, discharge or holdPosition
+	    #_openOutlet(enableStepTransition:=#enableStepTransition,
+	                 activate := (#interface.cmd = OutVlv_Cmd#OPEN_OUTLET) OR #_initialize.cmd_modeOpenOutlet OR #_purge.cmd_modeOpenOutlet OR #_discharge.cmd_modeOpenOutlet OR #_holdPosition.cmd_modeOpenOutlet,
+	                 cm_inPosition:=#cm_inPosition,
+	                 outletVlv_isOpen:=#outletValveInputs.outletVlv_isOpen);
+	    
+	END_REGION
+	
+	REGION Close Outlet 
+	    // Configure parameters for the close outlet delay
+	    REGION Parameters        
+	        IF #_purge.cmd_modeCloseOutlet THEN
+	            #_closeOutlet.parameters.vlvCloseDelay := #_purge.parameters.outletVlvCloseDelay;
+	        ELSE
+	            #_closeOutlet.parameters.vlvCloseDelay := #parameters.fixed.outletVlvCloseDelay;
+	        END_IF;
+	        
+	    END_REGION
+	    
+	    // Activate Close Outlet sequence when commanded or required by initialization, purge, discharge or holdPosition
+	    #_closeOutlet(enableStepTransition:=#enableStepTransition,
+	                  activate := (#interface.cmd = OutVlv_Cmd#CLOSE_OUTLET) OR #_initialize.cmd_modeCloseOutlet OR #_purge.cmd_modeCloseOutlet OR #_discharge.cmd_modeCloseOutlet OR #_holdPosition.cmd_modeCloseOutlet,
+	                  cm_inPosition:=#cm_inPosition,
+	                  outletVlv_isOpen := #outletValveInputs.outletVlv_isOpen,
+	                  outletVlv_isClosed := #outletValveInputs.outletVlv_isClosed);
+	END_REGION
+	
+	
+	REGION Outputs
+	    // Combine valve commands from outlet sequences
+	    #cmd_outletVlvOpen := #_outputs.cmd_outletVlvOpen := #_openOutlet.cmd_outletVlvOpen OR #_closeOutlet.cmd_outletVlvOpen;
+	    
+	END_REGION
+	
+	REGION Feedbacks
+	    // Update mode feedbacks 
+	    #interface.feedbacks.outletOpen := #outletValveInputs.outletVlv_isOpen;
+	    #interface.feedbacks.openingOutlet := (NOT #outletValveInputs.outletVlv_isOpen) AND #cmd_outletVlvOpen;
+	    #interface.feedbacks.outletClose := #outletValveInputs.outletVlv_isClosed;
+	    #interface.feedbacks.closingOutlet := (NOT #outletValveInputs.outletVlv_isClosed) AND (#interface.cmd <> OutVlv_Cmd#IDLE) AND  (NOT #cmd_outletVlvOpen);
+	    #interface.feedbacks.held := #_holdPosition.feedbacks.held;
+	    
+	    REGION Modes
+	        #interface.feedbacks.modes.initialize := #_initialize.feedbacks;
+	        #interface.feedbacks.modes.openOutlet := #_openOutlet.feedbacks;
+	        #interface.feedbacks.modes.closeOutlet := #_closeOutlet.feedbacks;
+	        #interface.feedbacks.modes.purge := #_purge.feedbacks;
+	        #interface.feedbacks.modes.discharge := #_discharge.feedbacks;
+	        #interface.feedbacks.modes.holdPosition := #_holdPosition.feedbacks;
+	        
+	    END_REGION
+	    
+	END_REGION
+	
+	
+	REGION Check CM/EM(mode) in position
+	    // Set control module position status
+	    #cm_inPosition :=
+	        (#_outputs.cmd_outletVlvOpen AND #outletValveInputs.outletVlv_isOpen) OR
+	        ((NOT #_outputs.cmd_outletVlvOpen) AND #outletValveInputs.outletVlv_isClosed);
+	        
+	    // Check if modes are idle or done
+	    #temp_mode_idle_or_done :=
+	        (#_openOutlet.status.idle OR #_openOutlet.status.done) AND
+	        (#_closeOutlet.status.idle OR #_closeOutlet.status.done);
+	    
+	END_REGION
+	
+	REGION Status
+	    #interface.status.done := #_initialize.status.done OR #_purge.status.done OR #_discharge.status.done OR #_holdPosition.status.done OR 
+	    ((NOT (#_initialize.status.busy OR #_purge.status.busy OR #_discharge.status.busy OR #_holdPosition.status.busy)) AND (#_openOutlet.status.done OR #_closeOutlet.status.done));
+	    #interface.status.busy := #_initialize.status.busy OR #_openOutlet.status.busy OR #_closeOutlet.status.busy OR #_purge.status.busy OR #_discharge.status.busy;
+	    #interface.status.idle := NOT (#interface.status.busy OR #interface.status.done);
+	    #interface.status.stopAlmActive := _.EM.TODO.alm;
+	    #interface.status.abortAlmActive := _.EM.TODO.alm;
+	    
+	    // Modes
+	    #interface.modesStatus.initialize := #_initialize.status;
+	    #interface.modesStatus.openOutlet := #_openOutlet.status;
+	    #interface.modesStatus.closeOutlet := #_closeOutlet.status;
+	    #interface.modesStatus.purge := #_purge.status;
+	    #interface.modesStatus.discharge := #_discharge.status;
+	    #interface.modesStatus.holdPosition := #_holdPosition.status;
+	    
+	END_REGION
+	
+END_FUNCTION_BLOCK
+END_NAMESPACE

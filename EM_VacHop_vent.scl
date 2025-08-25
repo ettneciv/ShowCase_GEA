@@ -1,0 +1,171 @@
+NAMESPACE EM_VacHop
+TYPE VacHop_Vent_Feedbacks
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      venting { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Venting
+   END_STRUCT;
+
+END_TYPE
+
+FUNCTION_BLOCK EM_VacHop_vent
+{ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      enableStepTransition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool := true;   // Enable Step Transition
+      parameters { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : VacHop_Vent_Params;   // Vent parameters
+      activate { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Activate vent sequence
+      cm_inPosition { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // CM in position
+      em_idleOrDone { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // EM Idle or Done
+      em_vacuum_idle { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // EM Vacuum:  idle
+      em_outVlv_outletClose { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // EM_outVlv: outlet valve is closed
+   END_VAR
+
+   VAR_OUTPUT 
+      cmd_em_vacuum { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : _.EM_Vac.Vac_Cmd;   // EM_Vacuum: Command
+      cmd_em_outVlv { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : _.EM_OutVlv.OutVlv_Cmd;   // EM_outVlv: Command
+      cmd_ventVlvOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // Command vent valve open
+   END_VAR
+
+   VAR 
+      status { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_modeStatus;   // Mode status
+      feedbacks { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : VacHop_Vent_Feedbacks;   // Feedbacks
+      step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Util_Step;   // Step status
+      _step { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'; S7_SetPoint := 'False'} : _.LIB.Step;   // Step instance
+      _stepTracker { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Struct
+         actual { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : VacHop_Vent_Steps;   // Current step
+         next { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : VacHop_Vent_Steps;   // Next step
+      END_STRUCT;
+   END_VAR
+
+
+BEGIN
+	REGION Header
+	    //********************************************************
+	    // EM_VacHop_vent Logic
+	    // Description: 
+	    // - Manages the vent sequence for the vacuum hopper, stopping vacuum, closing outlet, and cycling the vent valve.
+	    //********************************************************
+	    
+	    REGION Revision History
+	        (*
+	        Author      Date        Change
+	        GEA-VAR     2025-05-15  Initial version
+	        *)
+	    END_REGION
+	END_REGION
+	
+	REGION Step 
+	    IF #activate THEN
+	        CASE #step.actual OF
+	                // Idle state, no sequence active   
+	            VacHop_Vent_Steps#INITIAL:
+	                #_stepTracker.next := VacHop_Vent_Steps#STOP_VACUUM_AND_CLOSE_OUTLET;
+	                
+	                // Stop vacuum and close outlet valve
+	            VacHop_Vent_Steps#STOP_VACUUM_AND_CLOSE_OUTLET:
+	                #_stepTracker.next := VacHop_Vent_Steps#OPEN_VENT_VALVE;
+	                
+	                //  Open vent valve
+	            VacHop_Vent_Steps#OPEN_VENT_VALVE:
+	                #_stepTracker.next := VacHop_Vent_Steps#VENT_DELAY_ACTIVE;
+	                
+	                //  Delay for venting
+	            VacHop_Vent_Steps#VENT_DELAY_ACTIVE:
+	                IF _.LIB.IsTimerExceeded(actualTimer:=#step.actualTimer, limit:=#parameters.ventTime) THEN
+	                    #_stepTracker.next := VacHop_Vent_Steps#CLOSE_VENT_VALVE;
+	                END_IF;
+	                
+	                // Close vent valve
+	            VacHop_Vent_Steps#CLOSE_VENT_VALVE:
+	                #_stepTracker.next := VacHop_Vent_Steps#DONE;
+	                
+	                // Vent sequence complete
+	            VacHop_Vent_Steps#DONE:
+	                ;
+	                
+	                // Handle invalid step
+	            ELSE
+	                // Reset to idle on invalid step
+	                #step.actual := #_stepTracker.next := VacHop_Vent_Steps#INITIAL;
+	        END_CASE;
+	        
+	        // Advance step when module positioned
+	        IF #enableStepTransition AND #cm_inPosition AND #em_idleOrDone THEN
+	            #step.actual := #_stepTracker.next;
+	        END_IF;
+	        
+	    END_IF;
+	    
+	    // Manage step transitions and reset
+	    #_step(forceReset:=NOT #activate,
+	           step := #step);
+	    #_stepTracker.actual := #step.actual;
+	END_REGION
+	
+	REGION Actions
+	    // NA
+	    
+	END_REGION
+	
+	REGION Control/Equipment Modules and Modes: Commands     
+	    REGION Vacuum: Commands
+	        CASE #step.actual OF
+	            VacHop_Vent_Steps#INITIAL..VacHop_Vent_Steps#STOP_VACUUM_AND_CLOSE_OUTLET:
+	                IF #em_vacuum_idle THEN
+	                    #cmd_em_vacuum := _.EM_Vac.Vac_Cmd#IDLE;
+	                ELSE
+	                    #cmd_em_vacuum := _.EM_Vac.Vac_Cmd#STOP_VACUUM;
+	                END_IF;
+	            ELSE
+	                #cmd_em_vacuum := _.EM_Vac.Vac_Cmd#IDLE;
+	        END_CASE;
+	        
+	    END_REGION
+	    
+	    REGION Vacuum valve: Command
+	        CASE #step.actual OF
+	            VacHop_Vent_Steps#INITIAL..VacHop_Vent_Steps#STOP_VACUUM_AND_CLOSE_OUTLET:
+	                IF NOT #em_outVlv_outletClose THEN
+	                    #cmd_em_outVlv := _.EM_outVlv.OutVlv_Cmd#CLOSE_OUTLET;
+	                ELSE
+	                    #cmd_em_outVlv := _.EM_outVlv.OutVlv_Cmd#IDLE;
+	                END_IF;
+	            ELSE
+	                #cmd_em_outVlv := _.EM_outVlv.OutVlv_Cmd#IDLE;
+	        END_CASE;
+	        
+	    END_REGION
+	    
+	END_REGION
+	
+	REGION Control Modules: Commands 
+	    //********************************************************
+	    // Vent Valve
+	    //********************************************************
+	    #cmd_ventVlvOpen := #activate AND (NOT (#step.actual = VacHop_Vent_Steps#CLOSE_VENT_VALVE)) AND (NOT ((#step.actual = VacHop_Vent_Steps#DONE)));
+	    
+	    
+	END_REGION
+	
+	REGION #feedbacks
+	    // Update feedback statuses
+	    #feedbacks.venting := (#step.actual = VacHop_Vent_Steps#OPEN_VENT_VALVE) OR (#step.actual = VacHop_Vent_Steps#VENT_DELAY_ACTIVE);
+	    
+	END_REGION
+	
+	REGION Status
+	    // System idle when not activated
+	    #status.idle := NOT #activate;
+	                                    
+	    // System done when vent complete
+	    #status.done := (NOT #status.idle) AND #cm_inPosition AND #em_idleOrDone AND (#step.actual = VacHop_Vent_Steps#DONE);
+	                                    
+	    // System busy during vent sequence
+	    #status.busy := NOT #status.idle AND NOT #status.done;
+	                                    
+	END_REGION
+	
+	                                        
+END_FUNCTION_BLOCK
+END_NAMESPACE
