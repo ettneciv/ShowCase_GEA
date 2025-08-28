@@ -1,0 +1,12 @@
+NAMESPACE LIB
+TYPE Util_modeStatus
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      idle { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the mode is idle (not active)
+      done { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the mode has completed
+      busy { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the mode is actively executing
+   END_STRUCT;
+
+END_TYPE
+END_NAMESPACE

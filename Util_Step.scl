@@ -1,0 +1,12 @@
+NAMESPACE LIB
+TYPE Util_Step
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      actual { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Int := Util_Step_Constants#RESET_STEP;   // Current step number
+      firstCycle { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True on first cycle of step
+      actualTimer { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Time;   // Elapsed time in step (ms)
+   END_STRUCT;
+
+END_TYPE
+END_NAMESPACE

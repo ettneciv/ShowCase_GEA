@@ -1,0 +1,14 @@
+NAMESPACE LIB
+TYPE Util_status
+{ Published := 'TRUE' }
+VERSION : 0.1
+   STRUCT
+      idle { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the process is idle (not running)
+      done { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the process has completed successfully
+      busy { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when the process is actively running
+      stopAlmActive { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when a stop alarm is active
+      abortAlmActive { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;   // True when an abort alarm is active
+   END_STRUCT;
+
+END_TYPE
+END_NAMESPACE
