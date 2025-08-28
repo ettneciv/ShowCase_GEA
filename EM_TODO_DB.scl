@@ -1,0 +1,26 @@
+NAMESPACE EM
+DATA_BLOCK TODO
+{ DB_Accessible_From_OPC_UA := 'FALSE' ;
+ S7_Optimized_Access := 'TRUE' ; Published := 'TRUE' }
+VERSION : 0.1
+NON_RETAIN
+   VAR
+      alm { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      "bool" { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      isolationVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      isolationVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      vacuumVlv_isOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      vacuumVlv_isClosed { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      vacuumControlVlv_cmdOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      setpoint_vacuumControlVlv { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Real;
+      isolationVlv_cmdOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      vacuumVlv_cmdOpen { ExternalAccessible := 'False'; ExternalVisible := 'False'; ExternalWritable := 'False'} : Bool;
+      vacHop_inputs : _.EM_VacHop.VacHop_inputs;
+   END_VAR
+
+
+BEGIN
+   vacHop_inputs.em_vac_inputs.AHU_minAirflowReached := true;
+
+END_DATA_BLOCK
+END_NAMESPACE
