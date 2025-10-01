@@ -17,3 +17,7 @@ No additional dependencies or build steps are required.
 
 Contributions are welcome. Feel free to open issues or submit pull requests to improve the project.
 
+## Authors
+
+- MST
+
